@@ -1,0 +1,75 @@
+buildscript {
+  repositories {
+    jcenter()
+    maven {
+      url "https://plugins.gradle.org/m2/"
+    }
+  }
+  dependencies {
+    classpath 'org.akhikhl.gretty:gretty:+'
+  }
+}
+
+apply plugin: 'java'
+apply plugin: 'war'
+apply plugin: 'org.akhikhl.gretty'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+
+
+gretty {
+  port = 8080
+  contextPath = 'web'
+  servletContainer = 'jetty9'
+}
+
+
+dependencies {
+  compile(
+    project(':common'),
+    project(':service'),
+
+    "javax.servlet:jstl:$javaxJstlVersion",
+    "org.springframework.security:spring-security-taglibs:$springSecurityVersion",
+    "org.hibernate:hibernate-ehcache:$hibernateVersion",
+
+    //Core JAR is absolutely necessary to use Simons (Stopwatch, etc.)
+    "org.javasimon:javasimon-core:$javasimonVersion",
+    // This one allows monitoring JDBC calls (proxy driver)
+    "org.javasimon:javasimon-jdbc41:$javasimonVersion",
+    //JavaEE support, servlet filter, EJB/CDI interceptor
+    "org.javasimon:javasimon-javaee:$javasimonVersion",
+    //Spring support, AOP interceptor, MVC handler interceptor
+    "org.javasimon:javasimon-spring:$javasimonVersion",
+    //Embedded Java Simon web console
+    "org.javasimon:javasimon-console-embed:$javasimonVersion"
+  )
+
+  providedCompile(
+    "javax.servlet.jsp:jsp-api:$javaxJspVersion",
+
+  )
+  runtime(
+    "log4j:log4j:$log4jVersion",
+    "org.slf4j:slf4j-api:$slf4jVersion",
+    "org.slf4j:jcl-over-slf4j:$slf4jVersion",
+    "org.slf4j:log4j-over-slf4j:$slf4jVersion",
+    "com.mattbertolini:liquibase-slf4j:$slf4jLiquibaseVersion",
+    "ch.qos.logback:logback-classic:$logbackVersion",
+    "ch.qos.logback:logback-core:$logbackVersion",
+    "org.codehaus.groovy:groovy-all:$groovyVersion"
+  )
+
+  testCompile(
+    "junit:junit:$junitVersion",
+    "org.springframework:spring-test:$springVersion",
+    "org.mockito:mockito-all:$mokitoVersion",
+    "io.springfox:springfox-staticdocs:$swaggerVersion",
+    "javax.transaction:javax.transaction-api:$javaxTransactionVersion",
+    "javax.el:javax.el-api:$javaxElVersion",
+    //"com.fasterxml:classmate:$fasterxmlClassmateVersion",
+    "org.codehaus.groovy:groovy-all:$groovyVersion"
+  )
+}

@@ -1,0 +1,38 @@
+apply plugin: 'java'
+apply plugin: 'idea'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+compileJava.options.encoding = 'UTF-8'
+
+dependencies {
+  compile(
+    "org.apache.commons:commons-lang3:$commonsLangVersion",
+    "org.hibernate:hibernate-core:$hibernateVersion",
+    "org.hibernate:hibernate-java8:$hibernateVersion",
+    "org.glassfish.jersey.core:jersey-client:$jerseyVersion",
+    "org.glassfish.jersey.media:jersey-media-json-jackson:$jerseyVersion",
+    "org.ocpsoft.prettytime:prettytime:$prettyTimeVersion"
+  )
+}
+
+jar {
+  baseName = "common"
+  version = "1.0-SNAPSHOT"
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+  classifier = 'sources'
+  from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+  classifier = 'javadoc'
+  from javadoc.destinationDir
+}
+
+artifacts {
+  archives sourcesJar
+  archives javadocJar
+}
