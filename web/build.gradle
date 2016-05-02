@@ -20,9 +20,9 @@ targetCompatibility = 1.8
 
 
 gretty {
-  port = 8080
-  contextPath = 'web'
-  servletContainer = 'jetty9'
+  port = 37015
+  contextPath = '/'
+  servletContainer = 'tomcat8'
 }
 
 

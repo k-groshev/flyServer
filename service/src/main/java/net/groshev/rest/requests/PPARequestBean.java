@@ -10,6 +10,14 @@ public class PPARequestBean {
     private String tth;
     private String size;
 
+    public PPARequestBean() {
+    }
+
+    public PPARequestBean(String tth, String size) {
+        this.tth = tth;
+        this.size = size;
+    }
+
     public String getTth() {
         return this.tth;
     }

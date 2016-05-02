@@ -10,6 +10,15 @@ import java.util.List;
  */
 public class PPAArrayRequestBean {
     List<PPARequestBean> array;
+    PPARequestHeader header;
+
+    public PPAArrayRequestBean() {
+    }
+
+    public PPAArrayRequestBean(List<PPARequestBean> array, PPARequestHeader header) {
+        this.array = array;
+        this.header = header;
+    }
 
     public List<PPARequestBean> getArray() {
         return this.array;
@@ -17,5 +26,13 @@ public class PPAArrayRequestBean {
 
     public void setArray(final List<PPARequestBean> array) {
         this.array = array;
+    }
+
+    public PPARequestHeader getHeader() {
+        return this.header;
+    }
+
+    public void setHeader(PPARequestHeader header) {
+        this.header = header;
     }
 }

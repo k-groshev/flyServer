@@ -131,7 +131,9 @@ public class WebInit extends AbstractAnnotationConfigDispatcherServletInitialize
     </filter-mapping>
 */
 
-        return new Filter[]{characterEncodingFilter, localizationFilter, corsFilter};
+        ZlibFilter zlibFilter = new ZlibFilter();
+
+        return new Filter[]{zlibFilter, /*characterEncodingFilter, localizationFilter,*/ corsFilter};
     }
 
     // Этот метод должен содержать конфигурации которые инициализируют Beans
