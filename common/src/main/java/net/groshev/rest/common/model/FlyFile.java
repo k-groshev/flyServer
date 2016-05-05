@@ -1,7 +1,7 @@
 package net.groshev.rest.common.model;
 
 /**
- * REATE TABLE fly_file (  id             integer primary key AUTOINCREMENT not null,
+ * CREATE TABLE fly_file (  id             integer primary key AUTOINCREMENT not null,
  * tth            char(39) not null,
  * file_size      NUMBER not null,
  * count_plus     NUMBER default 0 not null,
