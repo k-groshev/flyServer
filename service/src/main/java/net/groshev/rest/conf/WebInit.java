@@ -53,13 +53,6 @@ public class WebInit extends AbstractAnnotationConfigDispatcherServletInitialize
 
     private static Logger LOGGER = LoggerFactory.getLogger(WebInit.class);
 
-    private void createSimonWebConsole(ServletContext container) {
-        ServletRegistration.Dynamic dn =
-                container.addServlet("simon-webconsole", new SimonConsoleServlet());
-        dn.setInitParameter("url-prefix", "/javasimon-console");
-        dn.addMapping("/javasimon-console/*");
-    }
-
     @Override
     public void onStartup(ServletContext servletContext) throws ServletException {
         LOGGER.debug("onStartup on servlet");
@@ -69,9 +62,6 @@ public class WebInit extends AbstractAnnotationConfigDispatcherServletInitialize
         servletContext.addListener(new HttpSessionEventPublisher());
         servletContext.addListener(new RequestContextListener());
         //servletContext.setInitParameter("contextInitializerClasses", "net.groshev.dis.internal.conf.WebContextInitializer");
-
-        createSimonWebConsole(servletContext);
-
     }
 
     @Override

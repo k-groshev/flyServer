@@ -1,15 +1,16 @@
 package net.groshev.rest.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.groshev.rest.beans.PPAArrayOutBean;
-import net.groshev.rest.beans.PPAMediaBean;
-import net.groshev.rest.beans.PPAOutBean;
-import net.groshev.rest.conf.ZlibFilter;
-import net.groshev.rest.requests.PPAArrayRequestBean;
-import net.groshev.rest.requests.PPARequestBean;
+import net.groshev.rest.beans.FlyArrayOutBean;
+import net.groshev.rest.beans.FlyMediaBean;
+import net.groshev.rest.beans.FlyOutBean;
+import net.groshev.rest.requests.FlyArrayRequestBean;
+import net.groshev.rest.requests.FlyRequestBean;
+import net.groshev.rest.service.FlyDBService;
 import net.groshev.rest.utils.compress.CompressionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,47 +20,33 @@ import javax.servlet.http.HttpServletRequestWrapper;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 
 @RestController
-public class PPARestController extends BaseRestController {
+public class FlyRestController extends BaseRestController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PPARestController.class);
+
+    @Autowired
+    private FlyDBService dbService;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(FlyRestController.class);
     @RequestMapping(value = "/fly-zget",
             method = RequestMethod.POST)
     @ResponseBody
     public Object getBean(HttpServletRequest request) throws IOException {
         String w = getRequestBody(request);
-        PPAArrayRequestBean requestBeans = null;
+        FlyArrayRequestBean requestBeans = null;
         ObjectMapper mapper = new ObjectMapper();
         try {
-            requestBeans = mapper.readValue(w.getBytes("UTF-8"), PPAArrayRequestBean.class);
+            requestBeans = mapper.readValue(w.getBytes("UTF-8"), FlyArrayRequestBean.class);
         } catch (IOException e) {
             return response500(e.getMessage());
         }
 
-        PPAArrayOutBean bean = new PPAArrayOutBean();
-        bean.setArray(new ArrayList<>());
-
         // обрабатываем
+        FlyArrayOutBean bean = dbService.processByKey(requestBeans);
 
-        for (PPARequestBean requestBean : requestBeans.getArray()) {
-            System.out.println("got bean: " + requestBean.toString());
-
-            PPAMediaBean mediaBean = new PPAMediaBean();
-            mediaBean.setFly_audio("43mn 17s | MPEG , 192 Kbps, 2 channels");
-            mediaBean.setFly_audio_br(192);
-            mediaBean.setFly_video("MPEG-4 , 1 816 Kbps, 16:9, 23.976 fps");
-            mediaBean.setFly_xy("720x400");
-
-            PPAOutBean outBean = new PPAOutBean();
-            outBean.setMedia(mediaBean);
-            outBean.setSize(requestBean.getSize());
-            outBean.setTth(requestBean.getTth());
-            bean.getArray().add(outBean);
-        }
         // криптуем выход
         StringWriter writer = new StringWriter();
         mapper.writeValue(writer,bean);
@@ -74,6 +61,7 @@ public class PPARestController extends BaseRestController {
         }
         in.close();
         out.close();
+        baos.close();
         return new ResponseEntity<byte[]>(baos.toByteArray(), HttpStatus.OK);
     }
 

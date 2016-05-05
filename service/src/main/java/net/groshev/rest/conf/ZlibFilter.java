@@ -1,6 +1,5 @@
 package net.groshev.rest.conf;
 
-import com.jcraft.jzlib.ZInputStream;
 import net.groshev.rest.utils.compress.CompressionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

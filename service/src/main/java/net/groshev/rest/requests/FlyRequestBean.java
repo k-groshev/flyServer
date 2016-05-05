@@ -6,14 +6,14 @@ package net.groshev.rest.requests;
  * @version $Id$
  * @since 1.0
  */
-public class PPARequestBean {
+public class FlyRequestBean {
     private String tth;
-    private String size;
+    private long size;
 
-    public PPARequestBean() {
+    public FlyRequestBean() {
     }
 
-    public PPARequestBean(String tth, String size) {
+    public FlyRequestBean(String tth, long size) {
         this.tth = tth;
         this.size = size;
     }
@@ -26,11 +26,11 @@ public class PPARequestBean {
         this.tth = tth;
     }
 
-    public String getSize() {
+    public long getSize() {
         return this.size;
     }
 
-    public void setSize(final String size) {
+    public void setSize(final long size) {
         this.size = size;
     }
 

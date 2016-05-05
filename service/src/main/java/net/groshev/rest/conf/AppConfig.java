@@ -76,13 +76,6 @@ public class AppConfig {
     @Autowired
     private Environment env;
 
-    @Value("${dis.host}")
-    private String host;
-    @Value("${dis.port}")
-    private String port;
-    @Value("${dis.context}")
-    private String context;
-
     /**
      * Add PropertySourcesPlaceholderConfigurer to make placeholder work.
      * This method MUST be static
@@ -100,8 +93,7 @@ public class AppConfig {
 
         // load the property file
         propertySourcesPlaceholderConfigurer.setLocations(new ClassPathResource(classPath + "hibernate.properties"),
-            new ClassPathResource("git.properties"),
-            new ClassPathResource(classPath + "dis.properties"));
+            new ClassPathResource("git.properties"));
         propertySourcesPlaceholderConfigurer.setFileEncoding("UTF-8");
 
         return propertySourcesPlaceholderConfigurer;
@@ -119,11 +111,6 @@ public class AppConfig {
         messageSource.setDefaultEncoding("UTF-8");
         messageSource.setUseCodeAsDefaultMessage(true);
         return messageSource;
-    }
-
-    @Bean(name = "siteUrl")
-    public String siteUrl() {
-        return host + ":" + port + "/" + context;
     }
 
     @Bean(name = "gitRepositoryStateBean")

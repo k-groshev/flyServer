@@ -69,7 +69,6 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
     },
     includeFilters = {@Filter(type = FilterType.ANNOTATION, value = Controller.class)}
 )
-@Import(SwaggerConfiguration.class)
 public class WebConfig extends WebMvcConfigurerAdapter {
 
     @Inject

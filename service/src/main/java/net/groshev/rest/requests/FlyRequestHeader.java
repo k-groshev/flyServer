@@ -5,15 +5,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * Created by kgroshev on 01.05.16.
  */
-public class PPARequestHeader {
+public class FlyRequestHeader {
 
     @JsonProperty("ID")
     private String id;
 
-    public PPARequestHeader() {
+    public FlyRequestHeader() {
     }
 
-    public PPARequestHeader(String id) {
+    public FlyRequestHeader(String id) {
 
         this.id = id;
     }

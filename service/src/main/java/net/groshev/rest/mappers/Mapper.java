@@ -28,50 +28,21 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.groshev.rest.jmx.old.hibernate;
+package net.groshev.rest.mappers;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
-/**
- * <p>Title: OpenCollectionStatisticsMBean</p>
- * <p>Description: Open data type interface for {@link OpenCollectionStatistics}</p>
- */
+public interface Mapper<S, D> {
+    D map(S object);
 
-public interface OpenCollectionStatisticsMBean {
+    S convert(D object);
 
-	/**
-	 * @return
-	 * @see org.hibernate.stat.CollectionStatistics#getLoadCount()
-	 */
-	public long getLoadCount();
-
-	/**
-	 * @return
-	 * @see org.hibernate.stat.CollectionStatistics#getFetchCount()
-	 */
-	public long getFetchCount();
-
-	/**
-	 * @return
-	 * @see org.hibernate.stat.internal.CategorizedStatistics#getCategoryName()
-	 */
-	public String getCategoryName();
-
-	/**
-	 * @return
-	 * @see org.hibernate.stat.CollectionStatistics#getRecreateCount()
-	 */
-	public long getRecreateCount();
-
-	/**
-	 * @return
-	 * @see org.hibernate.stat.CollectionStatistics#getRemoveCount()
-	 */
-	public long getRemoveCount();
-
-	/**
-	 * @return
-	 * @see org.hibernate.stat.CollectionStatistics#getUpdateCount()
-	 */
-	public long getUpdateCount();
-
+    default List<D> toList(Collection<? extends S> source) {
+        return source.stream()
+            .map(this::map)
+            .collect(Collectors.toList());
+    }
 }
+

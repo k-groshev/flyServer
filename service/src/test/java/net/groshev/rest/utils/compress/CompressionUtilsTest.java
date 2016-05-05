@@ -1,9 +1,10 @@
 package net.groshev.rest.utils.compress;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.groshev.rest.requests.PPAArrayRequestBean;
-import net.groshev.rest.requests.PPARequestBean;
-import net.groshev.rest.requests.PPARequestHeader;
+import net.groshev.rest.requests.FlyArrayRequestBean;
+import net.groshev.rest.requests.FlyRequestBean;
+import net.groshev.rest.requests.FlyRequestHeader;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.*;
@@ -25,6 +26,7 @@ String test  = "{     \"array\": [       {             \"size\": \"9524718\",   
     }
 
     @Test
+    @Ignore
     public void testZlib() throws Exception {
         String  path = "/Users/kgroshev/java_ee/apps/rest-test/tests/";
         File compressed = new File(path+"flylinkdc-extjson-zlib-file-9.json.zlib");
@@ -41,14 +43,15 @@ String test  = "{     \"array\": [       {             \"size\": \"9524718\",   
 
 
     @Test
+    @Ignore
     public void testResponse() throws Exception {
-        PPAArrayRequestBean outBean = new PPAArrayRequestBean();
+        FlyArrayRequestBean outBean = new FlyArrayRequestBean();
         outBean.setArray(new ArrayList<>());
-        outBean.getArray().add(new PPARequestBean("1468506112","Q2CDTLWKUN5LEXMGBQCVYAX2YJCEY4NV3MYFB2I"));
-        outBean.getArray().add(new PPARequestBean("1467570176","QJMFHAE6UMDH3MEW4BYJC4DPXFKVNDSKSJOFQQQ"));
-        outBean.getArray().add(new PPARequestBean("2132082152","TQUB7Q5G3U3IA4ZS7C2MGWVYC3TCPWWBLT6LSYA"));
-        outBean.getArray().add(new PPARequestBean("667374694","UCXORGVZMVN5JMNDXL2WQHXTZRAEWT47643LNRI"));
-        PPARequestHeader header = new PPARequestHeader();
+        outBean.getArray().add(new FlyRequestBean("Q2CDTLWKUN5LEXMGBQCVYAX2YJCEY4NV3MYFB2I", 1468506112L));
+        outBean.getArray().add(new FlyRequestBean("QJMFHAE6UMDH3MEW4BYJC4DPXFKVNDSKSJOFQQQ",1467570176L));
+        outBean.getArray().add(new FlyRequestBean("TQUB7Q5G3U3IA4ZS7C2MGWVYC3TCPWWBLT6LSYA", 2132082152L));
+        outBean.getArray().add(new FlyRequestBean("UCXORGVZMVN5JMNDXL2WQHXTZRAEWT47643LNRI",667374694L));
+        FlyRequestHeader header = new FlyRequestHeader();
         header.setId("1462082043");
         outBean.setHeader(header);
         ObjectMapper mapper = new ObjectMapper();
