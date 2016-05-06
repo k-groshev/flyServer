@@ -17,7 +17,6 @@
     - cassandra
     - opscenter
     - spark
-#    - { role: mysql, tags: [ 'mysql' ] }
 
   tasks:
     - name: start a spark master
