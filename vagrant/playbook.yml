@@ -13,6 +13,7 @@
     apt: name=htop state=present
 
   roles:
+    - java
     - cassandra
     - opscenter
     - spark
