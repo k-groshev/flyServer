@@ -35,6 +35,7 @@ public class FlyRestController extends BaseRestController {
             method = RequestMethod.POST)
     @ResponseBody
     public Object getBean(HttpServletRequest request) throws IOException {
+        final long start = System.nanoTime();
         String w = getRequestBody(request);
         FlyArrayRequestBean requestBeans = null;
         ObjectMapper mapper = new ObjectMapper();
@@ -62,6 +63,8 @@ public class FlyRestController extends BaseRestController {
         in.close();
         out.close();
         baos.close();
+        final long end = System.nanoTime() - start;
+        System.out.println("--> rest result got in: " + end / 1000000.0 + "ms");
         return new ResponseEntity<byte[]>(baos.toByteArray(), HttpStatus.OK);
     }
 

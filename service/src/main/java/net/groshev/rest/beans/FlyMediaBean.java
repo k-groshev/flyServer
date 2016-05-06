@@ -1,7 +1,6 @@
 package net.groshev.rest.beans;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import net.groshev.rest.utils.json.BeanSerializer;
 
 /**
  * Created with IntelliJ IDEA.
@@ -9,7 +8,7 @@ import net.groshev.rest.utils.json.BeanSerializer;
  * @version $Id$
  * @since 1.0
  */
-@JsonSerialize()
+@JsonSerialize
 public class FlyMediaBean {
     private String fly_audio;
     private String fly_audio_br;

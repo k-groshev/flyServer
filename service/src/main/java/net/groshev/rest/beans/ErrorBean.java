@@ -31,12 +31,11 @@
 package net.groshev.rest.beans;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import net.groshev.rest.utils.json.BeanSerializer;
 
 /**
  * Created by mt on 25.03.2015.
  */
-@JsonSerialize(using = BeanSerializer.class)
+@JsonSerialize
 public class ErrorBean {
 
     private int code;

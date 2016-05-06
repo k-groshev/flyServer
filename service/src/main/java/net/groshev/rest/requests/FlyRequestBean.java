@@ -9,6 +9,7 @@ package net.groshev.rest.requests;
 public class FlyRequestBean {
     private String tth;
     private long size;
+    private long only_counter;
 
     public FlyRequestBean() {
     }
@@ -32,6 +33,14 @@ public class FlyRequestBean {
 
     public void setSize(final long size) {
         this.size = size;
+    }
+
+    public long getOnly_counter() {
+        return this.only_counter;
+    }
+
+    public void setOnly_counter(final long only_counter) {
+        this.only_counter = only_counter;
     }
 
     @Override

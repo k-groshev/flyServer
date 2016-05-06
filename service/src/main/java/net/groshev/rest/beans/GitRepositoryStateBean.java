@@ -39,29 +39,10 @@ package net.groshev.rest.beans;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.util.HashMap;
 import java.util.Map;
-import net.groshev.rest.utils.json.BeanSerializer;
 
-@JsonSerialize(using = BeanSerializer.class)
+@JsonSerialize
 public class GitRepositoryStateBean {
-    public static final GitRepositoryStateBean EXAMPLE;
     private static final String NEW_LINE = System.getProperty("line.separator");
-
-    static {
-        EXAMPLE = new GitRepositoryStateBean();
-        EXAMPLE.setBranch("master");
-        EXAMPLE.setDirty("false");
-        EXAMPLE.setDescribe("58c295c");
-        EXAMPLE.setCommitId("58c295c4d0b7ffc4586c7f816942c357962184d9");
-        EXAMPLE.setCommitIdAbbrev("58c295c");
-        EXAMPLE.setCommitUserName("Konstantin Groshev");
-        EXAMPLE.setCommitUserEmail("mail@groshev.net");
-        EXAMPLE.setCommitMessageFull("перенес модуль rest-api обратно в service");
-        EXAMPLE.setCommitMessageShort("перенес модуль rest-api обратно в service");
-        EXAMPLE.setCommitTime("25.03.2015 @ 21:44:49 MSK");
-        EXAMPLE.setBuildUserName("");
-        EXAMPLE.setBuildUserEmail("");
-        EXAMPLE.setBuildTime("25.03.2015 @ 23:01:59 MSK");
-    }
 
     String branch;                  // =${git.branch}
     String dirty;                   // =${git.dirty}

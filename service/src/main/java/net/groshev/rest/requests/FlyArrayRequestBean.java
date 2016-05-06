@@ -9,8 +9,10 @@ import java.util.List;
  * @since 1.0
  */
 public class FlyArrayRequestBean {
-    List<FlyRequestBean> array;
-    FlyRequestHeader header;
+    private List<FlyRequestBean> array;
+    private FlyRequestHeader header;
+    private long cache;
+    private long different_counter;
 
     public FlyArrayRequestBean() {
     }
@@ -34,5 +36,21 @@ public class FlyArrayRequestBean {
 
     public void setHeader(FlyRequestHeader header) {
         this.header = header;
+    }
+
+    public long getCache() {
+        return this.cache;
+    }
+
+    public void setCache(final long cache) {
+        this.cache = cache;
+    }
+
+    public long getDifferent_counter() {
+        return this.different_counter;
+    }
+
+    public void setDifferent_counter(final long different_counter) {
+        this.different_counter = different_counter;
     }
 }

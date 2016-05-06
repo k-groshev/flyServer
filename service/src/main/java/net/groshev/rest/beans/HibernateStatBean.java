@@ -32,7 +32,6 @@ package net.groshev.rest.beans;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.util.Map;
-import net.groshev.rest.utils.json.BeanSerializer;
 import org.hibernate.stat.CollectionStatistics;
 import org.hibernate.stat.EntityStatistics;
 import org.hibernate.stat.NaturalIdCacheStatistics;
@@ -43,7 +42,7 @@ import org.hibernate.stat.Statistics;
 /**
  * Created by KGroshev on 08.12.2015.
  */
-@JsonSerialize(using = BeanSerializer.class)
+@JsonSerialize
 public class HibernateStatBean {
 
     private Map<String, QueryStatistics> queryStat;

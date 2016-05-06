@@ -2,7 +2,6 @@ package net.groshev.rest.beans;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import net.groshev.rest.utils.json.BeanSerializer;
 
 /**
  * {

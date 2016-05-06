@@ -13,8 +13,9 @@ import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import net.groshev.rest.beans.FlyArrayOutBean;
 import net.groshev.rest.common.model.FlyFile;
 import net.groshev.rest.domain.repository.FlyRepository;
@@ -38,18 +39,40 @@ public class FlyCassandraRepository implements FlyRepository {
     @Value("${cassandra.keyspace}")
     private String keyspace;
 
+    private Cluster cluster;
+
+    @PostConstruct
+    private void initCluster() {
+        Cluster c = getCluster();
+    }
+
+    private Cluster getCluster() {
+        if (cluster == null) {
+            cluster = Cluster
+                .builder()
+                .addContactPoint(host)
+                .withPort(port)
+                .withRetryPolicy(DefaultRetryPolicy.INSTANCE)
+                .withLoadBalancingPolicy(
+                    new TokenAwarePolicy(DCAwareRoundRobinPolicy.builder().build()))
+                .build();
+        }
+        return cluster;
+    }
+
+    @PreDestroy
+    private void closeCluster() {
+        if (cluster != null) {
+            // Clean up the connection by closing it
+            cluster.close();
+        }
+    }
+
     @Override
     public Void insert(FlyRequestBean bean) {
+        long start = System.nanoTime();
         // Connect to the cluster
-        Cluster cluster = Cluster
-            .builder()
-            .addContactPoint(host)
-            .withPort(port)
-            .withRetryPolicy(DefaultRetryPolicy.INSTANCE)
-            .withLoadBalancingPolicy(
-                new TokenAwarePolicy(DCAwareRoundRobinPolicy.builder().build()))
-            .build();
-        Session session = cluster.connect(keyspace);
+        Session session = getCluster().connect(keyspace);
 
         // Insert one record into the users table
         PreparedStatement statement = session.prepare("INSERT INTO fly_file" +
@@ -62,44 +85,35 @@ public class FlyCassandraRepository implements FlyRepository {
         session.executeAsync(boundStatement.bind(
             bean.getTth(),
             bean.getSize()));
-
-        // Clean up the connection by closing it
-        cluster.close();
+        session.close();
 
         System.out.println("inserted record:" + bean.toString());
-
+        long end = System.nanoTime() - start;
+        System.out.println("insertOne: " + end / 1000000.0 + " ms");
         return null;
     }
 
     @Override
     public Void update(FlyArrayOutBean bean) {
+        long start = System.nanoTime();
 
-        if (bean == null || bean.getArray() == null){
+        if (bean == null || bean.getArray() == null) {
             return null;
         }
 
-        // Connect to the cluster
-        Cluster cluster = Cluster
-            .builder()
-            .addContactPoint(host)
-            .withPort(port)
-            .withRetryPolicy(DefaultRetryPolicy.INSTANCE)
-            .withLoadBalancingPolicy(
-                new TokenAwarePolicy(DCAwareRoundRobinPolicy.builder().build()))
-            .build();
-        Session session = cluster.connect(keyspace);
+        Session session = getCluster().connect(keyspace);
 
         String whereClause = bean.getArray().stream()
             .map(e -> String.format("%d", e.getId()))
             .collect(Collectors.joining(","));
 
         session.executeAsync("update fly_file set count_query=count_query+1, last_date=toUnixTimestamp(now()) where id in(" + whereClause + ")");
-
-        // Clean up the connection by closing it
-        cluster.close();
+        session.close();
 
         System.out.println("updated ids:" + whereClause);
 
+        long end = System.nanoTime() - start;
+        System.out.println("updateOne: " + end / 1000000.0 + " ms");
         return null;
     }
 
@@ -108,18 +122,10 @@ public class FlyCassandraRepository implements FlyRepository {
         FlyArrayOutBean outBean = new FlyArrayOutBean();
         outBean.setArray(new ArrayList<>());
         // Connect to the cluster
-        Cluster cluster = Cluster
-            .builder()
-            .addContactPoint(host)
-            .withPort(port)
-            .withRetryPolicy(DefaultRetryPolicy.INSTANCE)
-            .withLoadBalancingPolicy(
-                new TokenAwarePolicy(DCAwareRoundRobinPolicy.builder().build()))
-            .build();
-        try {
-            Session session = cluster.connect(keyspace);
+        Session session = getCluster().connect(keyspace);
+        ExecutorService pool = Executors.newFixedThreadPool(bean.getArray().size() * 2);
 
-            ExecutorService pool = Executors.newFixedThreadPool(bean.getArray().size());
+        try {
             final long timeoutMs = 100;
             bean.getArray().parallelStream()
                 .map(e ->
@@ -153,23 +159,24 @@ public class FlyCassandraRepository implements FlyRepository {
 
                             FlyOutBeanMapper mapper = new FlyOutBeanMapper();
                             outBean.getArray().add(mapper.map(flyFile));
-                            System.out.println("got file="+flyFile.toString());
+                            //System.out.println("got file=" + flyFile.toString());
                         }
                         return null;
                     }, pool)
                 )
                 .forEach(future -> {
                     try {
+                        long start = System.nanoTime();
                         future.get();
+                        long end = System.nanoTime() - start;
+                        System.out.println("findOne: " + end / 1000000.0 + " ms");
                     } catch (Exception ex) {
                         System.out.println("ex:" + ex.getClass().getName() + " message:" + ex.getMessage());
-                    } finally {
-                        pool.shutdown();
                     }
                 });
         } finally {
-            // Clean up the connection by closing it
-            cluster.close();
+            pool.shutdown();
+            session.close();
         }
 
         return outBean;
