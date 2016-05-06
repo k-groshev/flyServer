@@ -27,7 +27,7 @@ public class DataLoader {
         // Connect to the cluster on localhost:9042 and keyspace "fly"
         Cluster cluster = Cluster
                 .builder()
-                .addContactPoint("192.168.10.11")
+                .addContactPoint("127.0.0.1")
                 .withPort(9042)
                 .withRetryPolicy(DefaultRetryPolicy.INSTANCE)
                 .withLoadBalancingPolicy(
@@ -60,7 +60,11 @@ public class DataLoader {
                 "fly_xy text,  " +
                 "count_media bigint, " +
                 "count_antivirus bigint," +
-                "PRIMARY KEY (tth, file_size));";
+                "PRIMARY KEY (tth, file_size))" +
+            "WITH compression =" +
+            "    { 'sstable_compression' : 'DeflateCompressor', 'chunk_length_kb' : 64 }" +
+            "  AND compaction =" +
+            "    { 'class' : 'SizeTieredCompactionStrategy', 'min_threshold' : 6 };";
         session.execute(cqlStatementCrtTable);
         session.close();
         // Clean up the connection by closing it
@@ -71,14 +75,14 @@ public class DataLoader {
         Statement stmt = null;
         try {
             Class.forName("org.sqlite.JDBC");
-            //String dbPath = "C:\\java_ee\\apps\\rest-test\\db\\fly-server-db.sqlite";
-            String dbPath = "/Users/kgroshev/java_ee/apps/rest-test/db/fly-server-db.sqlite";
+            String dbPath = "C:\\java_ee\\apps\\rest-test\\db\\fly-server-db.sqlite";
+            //String dbPath = "/Users/kgroshev/java_ee/apps/rest-test/db/fly-server-db.sqlite";
             c = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
             c.setAutoCommit(false);
             System.out.println("Opened database successfully");
 
             stmt = c.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM fly_file where id < 1000;");
+            ResultSet rs = stmt.executeQuery("SELECT * FROM fly_file where id < 100;");
             while (rs.next()) {
 
                 // получаем файл из sqlite
@@ -106,6 +110,7 @@ public class DataLoader {
                 // пишем в кассандру
                 DataLoader loader = new DataLoader();
                 loader.loadToCassandra(flyFile);
+                System.out.println("loaded "+flyFile.toString());
             }
             rs.close();
             stmt.close();
@@ -121,7 +126,7 @@ public class DataLoader {
         // Connect to the cluster on localhost:9042 and keyspace "fly"
         Cluster cluster = Cluster
                 .builder()
-                .addContactPoint("192.168.10.11")
+                .addContactPoint("127.0.0.1")
                 .withPort(9042)
                 .withRetryPolicy(DefaultRetryPolicy.INSTANCE)
                 .withLoadBalancingPolicy(

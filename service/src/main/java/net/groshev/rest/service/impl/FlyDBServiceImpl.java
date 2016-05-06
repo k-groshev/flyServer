@@ -1,5 +1,6 @@
 package net.groshev.rest.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -47,7 +48,7 @@ public class FlyDBServiceImpl implements FlyDBService {
         CompletableFuture<Void> future
             = CompletableFuture.supplyAsync(() -> repository.update(bean), pool);
         try {
-            future.get(timeoutMs, TimeUnit.MILLISECONDS);
+            future.get();
         } catch (Exception ex) {
             System.out.println("ex:" + ex.getClass().getName() + " message:" + ex.getMessage());
         } finally {
@@ -57,13 +58,18 @@ public class FlyDBServiceImpl implements FlyDBService {
 
     private void insertByKey(final FlyArrayRequestBean beanIn, final FlyArrayOutBean beanOut) {
 
-        List<String> outCollection = beanOut.getArray().stream()
-            .map(e -> e.getTth() + "~" + e.getSize())
-            .collect(Collectors.toList());
+        List<String> outCollection = new ArrayList<>();
+        if (beanOut != null && beanOut.getArray()!= null) {
+            outCollection = beanOut.getArray().stream()
+                .map(e -> e.getTth() + "~" + e.getSize())
+                .collect(Collectors.toList());
 
+        }
+
+        final List<String> finalOutCollection = outCollection;
         List<String> col = beanIn.getArray().stream()
             .map(e -> e.getTth() + "~" + e.getSize())
-            .filter(e -> !outCollection.contains(e))
+            .filter(e -> !finalOutCollection.contains(e))
             .collect(Collectors.toList());
         if (col.isEmpty()) {
             return;
@@ -81,7 +87,7 @@ public class FlyDBServiceImpl implements FlyDBService {
             )
             .forEach(future -> {
                 try {
-                    future.get(timeoutMs, TimeUnit.MILLISECONDS);
+                    future.get();
                 } catch (Exception ex) {
                     System.out.println("ex:" + ex.getClass().getName() + " message:" + ex.getMessage());
                 } finally {
