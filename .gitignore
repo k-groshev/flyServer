@@ -31,4 +31,5 @@ service/build/
 web/build/
 .gradle
 classes
-
+vagrant/.vagrant
+db/
