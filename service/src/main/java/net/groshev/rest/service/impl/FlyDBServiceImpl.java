@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 public class FlyDBServiceImpl implements FlyDBService {
 
     @Autowired
-    @Qualifier("flySqliteRepository")
+    @Qualifier("flyCassandraRepository")
     private FlyRepository repository;
 
     @Override

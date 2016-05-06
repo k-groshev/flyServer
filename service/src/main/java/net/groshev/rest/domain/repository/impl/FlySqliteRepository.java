@@ -25,7 +25,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class FlySqliteRepository implements FlyRepository {
 
-    private static final String dbPath = "C:\\java_ee\\apps\\rest-test\\db\\fly-server-db.sqlite";
+    //private static final String dbPath = "C:\\java_ee\\apps\\rest-test\\db\\fly-server-db.sqlite";
+    private static final String dbPath = "/Users/kgroshev/java_ee/apps/rest-test/db/fly-server-db.sqlite";
 
     @Override
     public Void insert(FlyRequestBean bean) {

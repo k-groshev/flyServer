@@ -3,19 +3,20 @@ package net.groshev.rest.utils;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 import com.datastax.driver.core.policies.DefaultRetryPolicy;
 import com.datastax.driver.core.policies.TokenAwarePolicy;
+import net.groshev.rest.common.model.FlyFile;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import net.groshev.rest.common.model.FlyFile;
 
 /**
  * Created with IntelliJ IDEA.
+ *
  * @author Konstantin Groshev (mail@groshev.net)
  * @version $Id$
  * @since 1.0
@@ -23,17 +24,61 @@ import net.groshev.rest.common.model.FlyFile;
 public class DataLoader {
 
     public static void main(String args[]) {
+        // Connect to the cluster on localhost:9042 and keyspace "fly"
+        Cluster cluster = Cluster
+                .builder()
+                .addContactPoint("192.168.10.11")
+                .withPort(9042)
+                .withRetryPolicy(DefaultRetryPolicy.INSTANCE)
+                .withLoadBalancingPolicy(
+                        new TokenAwarePolicy(DCAwareRoundRobinPolicy.builder().build()))
+                .build();
+        Session session = cluster.connect("system");
+
+        String cqlStatement = "CREATE KEYSPACE fly WITH " +
+                "replication = {'class':'SimpleStrategy','replication_factor':1}";
+        session.execute(cqlStatement);
+        session.close();
+
+
+        session = cluster.connect("fly");
+        String cqlStatementCrtTable = "CREATE TABLE fly_file (" +
+                "id bigint, " +
+                "tth text, " +
+                "file_size bigint, " +
+                "count_plus bigint, " +
+                "count_minus bigint, " +
+                "count_fake bigint, " +
+                "count_download bigint," +
+                "count_upload bigint, " +
+                "count_query bigint, " +
+                "first_date bigint, " +
+                "last_date text, " +
+                "fly_audio text," +
+                "fly_audio_br text," +
+                "fly_video text, " +
+                "fly_xy text,  " +
+                "count_media bigint, " +
+                "count_antivirus bigint," +
+                "PRIMARY KEY (tth, file_size));";
+        session.execute(cqlStatementCrtTable);
+        session.close();
+        // Clean up the connection by closing it
+        cluster.close();
+
+
         Connection c = null;
         Statement stmt = null;
         try {
             Class.forName("org.sqlite.JDBC");
-            String dbPath = "C:\\java_ee\\apps\\rest-test\\db\\fly-server-db.sqlite ";
+            //String dbPath = "C:\\java_ee\\apps\\rest-test\\db\\fly-server-db.sqlite";
+            String dbPath = "/Users/kgroshev/java_ee/apps/rest-test/db/fly-server-db.sqlite";
             c = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
             c.setAutoCommit(false);
             System.out.println("Opened database successfully");
 
             stmt = c.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM fly_file where id < 100;");
+            ResultSet rs = stmt.executeQuery("SELECT * FROM fly_file where id < 1000;");
             while (rs.next()) {
 
                 // получаем файл из sqlite
@@ -75,43 +120,42 @@ public class DataLoader {
     private void loadToCassandra(final FlyFile flyFile) {
         // Connect to the cluster on localhost:9042 and keyspace "fly"
         Cluster cluster = Cluster
-            .builder()
-            .addContactPoint("localhost")
-            .withPort(9042)
-            .withRetryPolicy(DefaultRetryPolicy.INSTANCE)
-            .withLoadBalancingPolicy(
-                new TokenAwarePolicy(DCAwareRoundRobinPolicy.builder().build()))
-            .build();
+                .builder()
+                .addContactPoint("192.168.10.11")
+                .withPort(9042)
+                .withRetryPolicy(DefaultRetryPolicy.INSTANCE)
+                .withLoadBalancingPolicy(
+                        new TokenAwarePolicy(DCAwareRoundRobinPolicy.builder().build()))
+                .build();
         Session session = cluster.connect("fly");
-
         // Insert one record into the users table
         PreparedStatement statement = session.prepare("INSERT INTO fly_file" +
-            "(id, tth, file_size, count_plus, count_minus, count_fake, count_download," +
-            " count_upload, count_query, first_date, last_date, fly_audio," +
-            " fly_audio_br,  fly_video, fly_xy,  count_media, count_antivirus)" +
-            "VALUES " +
-            "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
+                "(id, tth, file_size, count_plus, count_minus, count_fake, count_download," +
+                " count_upload, count_query, first_date, last_date, fly_audio," +
+                " fly_audio_br,  fly_video, fly_xy,  count_media, count_antivirus)" +
+                "VALUES " +
+                "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
 
         BoundStatement boundStatement = new BoundStatement(statement);
 
         session.executeAsync(boundStatement.bind(
-            flyFile.getId(),
-            flyFile.getTth(),
-            flyFile.getFile_size(),
-            flyFile.getCount_plus(),
-            flyFile.getCount_minus(),
-            flyFile.getCount_fake(),
-            flyFile.getCount_download(),
-            flyFile.getCount_upload(),
-            flyFile.getCount_query(),
-            flyFile.getFirst_date(),
-            flyFile.getLast_date(),
-            flyFile.getFly_audio(),
-            flyFile.getFly_audio_br(),
-            flyFile.getFly_video(),
-            flyFile.getFly_xy(),
-            flyFile.getCount_media(),
-            flyFile.getCount_antivirus()));
+                flyFile.getId(),
+                flyFile.getTth(),
+                flyFile.getFile_size(),
+                flyFile.getCount_plus(),
+                flyFile.getCount_minus(),
+                flyFile.getCount_fake(),
+                flyFile.getCount_download(),
+                flyFile.getCount_upload(),
+                flyFile.getCount_query(),
+                flyFile.getFirst_date(),
+                flyFile.getLast_date(),
+                flyFile.getFly_audio(),
+                flyFile.getFly_audio_br(),
+                flyFile.getFly_video(),
+                flyFile.getFly_xy(),
+                flyFile.getCount_media(),
+                flyFile.getCount_antivirus()));
 
         // Clean up the connection by closing it
         cluster.close();
