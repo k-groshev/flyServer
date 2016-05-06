@@ -1,0 +1,1 @@
+spark_install_location: /opt/{{ spark_version }}/

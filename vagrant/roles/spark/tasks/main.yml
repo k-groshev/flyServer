@@ -1,0 +1,28 @@
+- name: download spark
+  get_url: url=http://d3kbcqa49mib13.cloudfront.net/{{ spark_version }}.tgz dest=/opt/ force=no
+
+- name: unzip spark
+  unarchive: copy=no src=/opt/{{ spark_version }}.tgz  dest=/opt creates={{ spark_install_location }}
+
+- name: give ownership to vagrant
+  file: path={{ spark_install_location }} owner=vagrant group=vagrant recurse=yes
+
+- name: create logs directory
+  file: path={{ spark_install_location }}logs state=directory owner=vagrant group=vagrant
+
+- name: create logs directory
+  file: path={{ spark_install_location }}work state=directory owner=vagrant group=vagrant
+
+  # todo: work and logs folders
+
+- name: copy over spark env file
+  template: src=spark-env.sh dest={{ spark_install_location }}/conf/
+
+- name: copy over spark properties file for the shell
+  template: src=spark-defaults.conf dest={{ spark_install_location }}/conf/
+
+- name: get spark on the path
+  lineinfile: dest=/home/vagrant/.bashrc line="export PATH=$PATH:{{ spark_install_location }}bin:{{ spark_install_location }}sbin"
+
+- name: alias spark shell to add the driver to jars
+  lineinfile: dest=/home/vagrant/.bashrc  line='alias spark-shell="spark-shell --jars /vagrant/{{ connector_jar }}"'
