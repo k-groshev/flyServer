@@ -7,18 +7,29 @@
     seeds: 192.168.10.11
     spark_version: spark-1.6.1-bin-hadoop2.4
     connector_jar: spark-cassandra-connector-1.6.0-M2-s_2.10.jar
-
-  tasks:
-  - name: install htop
-    apt: name=htop state=present
+    tomcat_version: 8.5.0
+    http_port: 37105
+    https_port: 8443
+    admin_username: admin
+    admin_password: adminsecret
 
   roles:
     - java
     - cassandra
-    - opscenter
+#    - opscenter
     - spark
+    - tomcat
 
   tasks:
+    - name: install htop
+      apt: name=htop state=present update_cache=yes
+
+    - name: install mc
+      apt: name=mc state=present update_cache=yes
+
+    - name: install ru_RU
+      apt: name=language-pack-ru state=present update_cache=yes
+
     - name: start a spark master
       command: nohup /opt/{{ spark_version }}/sbin/start-master.sh
       tags:
