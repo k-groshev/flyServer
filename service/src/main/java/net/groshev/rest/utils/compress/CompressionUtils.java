@@ -39,8 +39,7 @@ public class CompressionUtils {
         }
         outputStream.close();
         byte[] output = outputStream.toByteArray();
-        LOG.debug("Original: " + data.length);
-        LOG.debug("Compressed: " + output.length);
+        LOG.debug("decompress: " + data.length+ " -> " + output.length+" bytes");
         return output;
     }
 
