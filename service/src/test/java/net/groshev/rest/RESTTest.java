@@ -41,7 +41,7 @@ public class RESTTest {
 
         List<Double> results = new ArrayList<>();
         // делаем POST-запрос
-        baseURI = "http://media.fly-server.ru";
+        baseURI = "http://192.168.10.11";
         port = 37015;
         log.info("testing server: {}:{}", baseURI, port);
 
@@ -101,16 +101,20 @@ public class RESTTest {
         results.add(convertToMSecs(duarationNs));
         log.info("duration ={} ms", convertToMSecs(duarationNs));
         // пробуем декомпрессировать ответ
-        byte[] decompressedResponse = new byte[0];
-        try {
-            decompressedResponse = CompressionUtils.decompress(response);
-        } catch (IOException e) {
-            fail("response decompression error");
-        } catch (DataFormatException e) {
-            fail("response decompression error on DataFormatException");
+        if (response.length >0) {
+            byte[] decompressedResponse = new byte[0];
+            try {
+                decompressedResponse = CompressionUtils.decompress(response);
+            } catch (IOException e) {
+                fail("response decompression error");
+            } catch (DataFormatException e) {
+                fail("response decompression error on DataFormatException");
+            }
+            // проверяем валидность полученного ответа json
+            assertTrue(JSONUtils.isJSONValid(new String(decompressedResponse)));
+        }else{
+            log.info("response size = 0");
         }
-        // проверяем валидность полученного ответа json
-        assertTrue(JSONUtils.isJSONValid(new String(decompressedResponse)));
         return null;
     }
 

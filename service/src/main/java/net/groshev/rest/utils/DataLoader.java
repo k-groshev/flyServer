@@ -34,7 +34,7 @@ public class DataLoader {
         // Connect to the cluster on localhost:9042 and keyspace "fly"
         Cluster cluster = Cluster
             .builder()
-            .addContactPoint("127.0.0.1")
+            .addContactPoint("192.168.10.11")
             .withPort(9042)
             .withRetryPolicy(DefaultRetryPolicy.INSTANCE)
             .withLoadBalancingPolicy(
@@ -97,8 +97,8 @@ public class DataLoader {
 
         try {
             Class.forName("org.sqlite.JDBC");
-            String dbPath = "C:\\java_ee\\apps\\rest-test\\db\\fly-server-db.sqlite";
-            //String dbPath = "/Users/kgroshev/java_ee/apps/rest-test/db/fly-server-db.sqlite";
+            //String dbPath = "C:\\java_ee\\apps\\rest-test\\db\\fly-server-db.sqlite";
+            String dbPath = "/Users/kgroshev/java_ee/apps/rest-test/db/fly-server-db.sqlite";
             c = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
             c.setAutoCommit(false);
             System.out.println("Opened database successfully");
@@ -158,7 +158,7 @@ public class DataLoader {
         // Connect to the cluster on localhost:9042 and keyspace "fly"
         Cluster cluster = Cluster
             .builder()
-            .addContactPoint("127.0.0.1")
+            .addContactPoint("192.168.10.11")
             .withPort(9042)
             .withRetryPolicy(DefaultRetryPolicy.INSTANCE)
             .withLoadBalancingPolicy(
