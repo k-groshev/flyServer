@@ -30,6 +30,13 @@
       <!.. ..> that surrounds them.
     -->
 
+    <role rolename="manager-gui"/>
+    <role rolename="manager-script"/>
+    <role rolename="manager-jmx"/>
+    <role rolename="manager-status"/>
+    <role rolename="admin-gui"/>
+    <role rolename="admin-script"/>
+
     <user username="{{ admin_username }}" password="{{ admin_password }}" roles="manager-gui, admin-gui" />
 
     <!--

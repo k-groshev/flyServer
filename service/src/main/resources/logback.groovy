@@ -48,10 +48,8 @@ scan("30 seconds")
 // always a good idea to add an on console status listener
 statusListener(OnConsoleStatusListener)
 
-def logHome = System.getProperty("fascinator.home");
-if (!logHome) {
-    logHome = "./logs"
-}
+def BASE_DIR = System.getProperty('catalina.base') ?: System.getProperty('user.dir')
+def logHome = "${BASE_DIR}/logs";
 addInfo("Using logging directory: ${logHome}")
 
 context.name = "dis"

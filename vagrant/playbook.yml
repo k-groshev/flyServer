@@ -8,10 +8,10 @@
     spark_version: spark-1.6.1-bin-hadoop2.4
     connector_jar: spark-cassandra-connector-1.6.0-M2-s_2.10.jar
     tomcat_version: 8.5.0
-    http_port: 37105
+    http_port: 37015
     https_port: 8443
-    admin_username: admin
-    admin_password: adminsecret
+    admin_username: tomadmin
+    admin_password: tomadminsecret
 
   roles:
     - java

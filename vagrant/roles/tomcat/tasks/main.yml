@@ -24,6 +24,14 @@
   template: src=tomcat-users.xml dest=/opt/tomcat/conf/
   notify: restart tomcat
 
+- name: Configure manager app
+  template: src=manager.xml dest=/opt/tomcat/conf/Catalina/localhost/
+  notify: restart tomcat
+
+- name: Configure manager app - 2
+  template: src=web.xml dest=/opt/tomcat/webapp/manager/WEB-INF/
+  notify: restart tomcat
+
 - name: Install Tomcat init script
   copy: src=tomcat-initscript.sh dest=/etc/init.d/tomcat mode=0755
 
