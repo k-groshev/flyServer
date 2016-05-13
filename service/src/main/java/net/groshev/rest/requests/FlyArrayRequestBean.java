@@ -1,5 +1,6 @@
 package net.groshev.rest.requests;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 
 /**
@@ -13,6 +14,7 @@ public class FlyArrayRequestBean {
     private FlyRequestHeader header;
     private long cache;
     private long different_counter;
+    private long only_counter;
 
     public FlyArrayRequestBean() {
     }
@@ -52,5 +54,13 @@ public class FlyArrayRequestBean {
 
     public void setDifferent_counter(final long different_counter) {
         this.different_counter = different_counter;
+    }
+
+    public long getOnly_counter() {
+        return this.only_counter;
+    }
+
+    public void setOnly_counter(final long only_counter) {
+        this.only_counter = only_counter;
     }
 }
