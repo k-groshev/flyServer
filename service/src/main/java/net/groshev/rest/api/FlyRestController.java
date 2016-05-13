@@ -26,7 +26,6 @@ import java.util.zip.DeflaterOutputStream;
 @RestController
 public class FlyRestController extends BaseRestController {
 
-
     @Autowired
     private FlyDBService dbService;
 
@@ -64,7 +63,7 @@ public class FlyRestController extends BaseRestController {
         out.close();
         baos.close();
         final long end = System.nanoTime() - start;
-        System.out.println("--> rest result got in: " + end / 1000000.0 + "ms");
+        LOGGER.debug("--> rest result got in: " + end / 1000000.0 + "ms");
         return new ResponseEntity<byte[]>(baos.toByteArray(), HttpStatus.OK);
     }
 

@@ -12,6 +12,8 @@ import net.groshev.rest.domain.repository.FlyRepository;
 import net.groshev.rest.requests.FlyArrayRequestBean;
 import net.groshev.rest.requests.FlyRequestBean;
 import net.groshev.rest.service.FlyDBService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class FlyDBServiceImpl implements FlyDBService {
+
+    public static final Logger LOGGER = LoggerFactory.getLogger(FlyDBServiceImpl.class);
 
     @Autowired
     @Qualifier("flyCassandraRepository")
@@ -50,7 +54,7 @@ public class FlyDBServiceImpl implements FlyDBService {
         try {
             future.get();
         } catch (Exception ex) {
-            System.out.println("ex:" + ex.getClass().getName() + " message:" + ex.getMessage());
+            LOGGER.debug("ex:" + ex.getClass().getName() + " message:" + ex.getMessage());
         } finally {
             pool.shutdown();
         }
@@ -89,7 +93,7 @@ public class FlyDBServiceImpl implements FlyDBService {
                 try {
                     future.get();
                 } catch (Exception ex) {
-                    System.out.println("ex:" + ex.getClass().getName() + " message:" + ex.getMessage());
+                    LOGGER.debug("ex:" + ex.getClass().getName() + " message:" + ex.getMessage());
                 } finally {
                     pool.shutdown();
                 }

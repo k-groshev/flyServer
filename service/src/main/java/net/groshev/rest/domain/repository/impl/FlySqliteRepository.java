@@ -14,6 +14,8 @@ import net.groshev.rest.mappers.FlyOutBeanMapper;
 import net.groshev.rest.requests.FlyArrayRequestBean;
 import net.groshev.rest.requests.FlyRequestBean;
 import net.groshev.rest.utils.JdbcUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -25,6 +27,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class FlySqliteRepository implements FlyRepository {
 
+    public static final Logger LOGGER = LoggerFactory.getLogger(FlySqliteRepository.class);
+    
     //private static final String dbPath = "C:\\java_ee\\apps\\rest-test\\db\\fly-server-db.sqlite";
     private static final String dbPath = "/Users/kgroshev/java_ee/apps/rest-test/db/fly-server-db.sqlite";
 
@@ -36,7 +40,7 @@ public class FlySqliteRepository implements FlyRepository {
             Class.forName("org.sqlite.JDBC");
             c = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
             c.setAutoCommit(false);
-            System.out.println("Opened database successfully");
+            LOGGER.debug("Opened database successfully");
 
             String sql = "insert into fly_file (tth,file_size,first_date) values(?,?,strftime('%s','now','localtime'))";
             stmt = c.prepareStatement(sql);
@@ -47,9 +51,9 @@ public class FlySqliteRepository implements FlyRepository {
             stmt.close();
             c.commit();
             c.close();
-            System.out.println("inserted record:" + bean.toString());
+            LOGGER.debug("inserted record:" + bean.toString());
         } catch (Exception e) {
-            System.err.println(e.getClass().getName() + ": " + e.getMessage());
+            LOGGER.error(e.getClass().getName() + ": " + e.getMessage());
         }
 
         return null;
@@ -64,7 +68,7 @@ public class FlySqliteRepository implements FlyRepository {
             Class.forName("org.sqlite.JDBC");
             c = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
             c.setAutoCommit(false);
-            System.out.println("Opened database successfully");
+            LOGGER.debug("Opened database successfully");
 
             stmt = c.createStatement();
             String whereClause = bean.getArray().stream()
@@ -75,9 +79,9 @@ public class FlySqliteRepository implements FlyRepository {
             stmt.close();
             c.commit();
             c.close();
-            System.out.println("updated ids:" + whereClause);
+            LOGGER.debug("updated ids:" + whereClause);
         } catch (Exception e) {
-            System.err.println(e.getClass().getName() + ": " + e.getMessage());
+            LOGGER.error(e.getClass().getName() + ": " + e.getMessage());
         }
         return null;
     }
@@ -93,7 +97,7 @@ public class FlySqliteRepository implements FlyRepository {
             Class.forName("org.sqlite.JDBC");
             c = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
             c.setAutoCommit(false);
-            System.out.println("Opened database successfully");
+            LOGGER.debug("Opened database successfully");
 
             stmt = c.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT * FROM fly_file where " + getCause(bean) + ";");
@@ -130,7 +134,7 @@ public class FlySqliteRepository implements FlyRepository {
             stmt.close();
             c.close();
         } catch (Exception e) {
-            System.err.println(e.getClass().getName() + ": " + e.getMessage());
+            LOGGER.error(e.getClass().getName() + ": " + e.getMessage());
         }
         return outBean;
     }

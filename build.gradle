@@ -13,8 +13,8 @@ subprojects {
     jerseyVersion = '2.16'
     prettyTimeVersion = '3.2.7.Final'
     log4jVersion = '1.2.17'
-    slf4jVersion = '1.7.14'
-    logbackVersion = '1.1.3'
+    slf4jVersion = '1.7.20'
+    logbackVersion = '1.1.7'
     slf4jLiquibaseVersion = '2.0.0'
     postgresVersion = '9.2-1002-jdbc4'
     springVersion = '4.2.5.RELEASE'
@@ -36,7 +36,7 @@ subprojects {
     jsr250Version='1.0'
     jsoupVersion='1.8.3'
     javasimonVersion='4.1.0'
-    groovyVersion='2.3.2'
+    groovyVersion='2.4.6'
 
 
 
@@ -45,10 +45,5 @@ subprojects {
     mokitoVersion='1.9.5'
     fasterxmlClassmateVersion='1.3.0'
     restAssuredVersion = '2.6.0'
-
-
-    mockserverVersion = '3.9.17'
-    restAssuredVersion = '2.5.0'
-
   }
 }

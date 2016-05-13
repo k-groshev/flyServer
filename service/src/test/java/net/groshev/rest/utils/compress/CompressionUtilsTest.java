@@ -11,18 +11,22 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.zip.DeflaterOutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by kgroshev on 27.04.16.
  */
 public class CompressionUtilsTest {
+    public static final Logger LOGGER = LoggerFactory.getLogger(CompressionUtilsTest.class);
+    
     @Test
     public void compress() throws Exception {
 String test  = "{     \"array\": [       {             \"size\": \"9524718\",             \"tth\": \"M26LGEU33I43LGZ2RCUVUTSYOYR2OJDRK6TYA4A\"         }     ] }";
         byte[] arr = CompressionUtils.compress(test.getBytes("UTF-8"));
-        System.out.println(new String(arr, 0, arr.length, "UTF-8"));
+        LOGGER.debug(new String(arr, 0, arr.length, "UTF-8"));
 
-        System.out.println(CompressionUtils.decompress(arr));
+        LOGGER.debug(new String(CompressionUtils.decompress(arr)));
     }
 
     @Test
@@ -58,9 +62,9 @@ String test  = "{     \"array\": [       {             \"size\": \"9524718\",   
         StringWriter writer = new StringWriter();
         mapper.writeValue(writer,outBean);
         String json = writer.toString();
-        System.out.println(json);
+        LOGGER.debug(json);
         String compress = CompressionUtils.compress(json);
-        System.out.println(compress);
+        LOGGER.debug(compress);
         String  path = "/Users/kgroshev/java_ee/apps/rest-test/tests/";
         File file = new File(path + "dd.txt");
         OutputStream out = new DeflaterOutputStream(new FileOutputStream(file));

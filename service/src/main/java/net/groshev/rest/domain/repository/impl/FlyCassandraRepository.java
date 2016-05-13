@@ -23,6 +23,8 @@ import net.groshev.rest.mappers.FlyOutBeanMapper;
 import net.groshev.rest.requests.FlyArrayRequestBean;
 import net.groshev.rest.requests.FlyRequestBean;
 import net.groshev.rest.utils.CassandraUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
@@ -31,6 +33,8 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public class FlyCassandraRepository implements FlyRepository {
+    
+    public static final Logger LOGGER = LoggerFactory.getLogger(FlyCassandraRepository.class);
 
     @Value("${cassandra.host}")
     private String host;
@@ -43,21 +47,18 @@ public class FlyCassandraRepository implements FlyRepository {
 
     @PostConstruct
     private void initCluster() {
-        Cluster c = getCluster();
+        buildCluster();
     }
 
-    private Cluster getCluster() {
-        if (cluster == null) {
-            cluster = Cluster
-                .builder()
-                .addContactPoint(host)
-                .withPort(port)
-                .withRetryPolicy(DefaultRetryPolicy.INSTANCE)
-                .withLoadBalancingPolicy(
-                    new TokenAwarePolicy(DCAwareRoundRobinPolicy.builder().build()))
-                .build();
-        }
-        return cluster;
+    private Cluster buildCluster() {
+        return Cluster
+            .builder()
+            .addContactPoint(host)
+            .withPort(port)
+            .withRetryPolicy(DefaultRetryPolicy.INSTANCE)
+            .withLoadBalancingPolicy(
+                new TokenAwarePolicy(DCAwareRoundRobinPolicy.builder().build()))
+            .build();
     }
 
     @PreDestroy
@@ -87,10 +88,20 @@ public class FlyCassandraRepository implements FlyRepository {
             bean.getSize()));
         session.close();
 
-        System.out.println("inserted record:" + bean.toString());
+        LOGGER.debug("inserted record:" + bean.toString());
         long end = System.nanoTime() - start;
-        System.out.println("insertOne: " + end / 1000000.0 + " ms");
+        LOGGER.debug("insertOne: " + end / 1000000.0 + " ms");
         return null;
+    }
+
+    private Cluster getCluster() {
+        long start = System.nanoTime();
+        if (cluster == null) {
+            cluster = buildCluster();
+        }
+        long end = System.nanoTime() - start;
+        LOGGER.debug("cluster got in: " + end / 1000000.0 + " ms");        
+        return cluster;
     }
 
     @Override
@@ -110,10 +121,10 @@ public class FlyCassandraRepository implements FlyRepository {
         session.executeAsync("update fly_file set count_query=count_query+1, last_date=toUnixTimestamp(now()) where id in(" + whereClause + ")");
         session.close();
 
-        System.out.println("updated ids:" + whereClause);
+        LOGGER.debug("updated ids:" + whereClause);
 
         long end = System.nanoTime() - start;
-        System.out.println("updateOne: " + end / 1000000.0 + " ms");
+        LOGGER.debug("updateOne: " + end / 1000000.0 + " ms");
         return null;
     }
 
@@ -159,7 +170,7 @@ public class FlyCassandraRepository implements FlyRepository {
 
                             FlyOutBeanMapper mapper = new FlyOutBeanMapper();
                             outBean.getArray().add(mapper.map(flyFile));
-                            //System.out.println("got file=" + flyFile.toString());
+                            //LOGGER.debug("got file=" + flyFile.toString());
                         }
                         return null;
                     }, pool)
@@ -169,9 +180,9 @@ public class FlyCassandraRepository implements FlyRepository {
                         long start = System.nanoTime();
                         future.get();
                         long end = System.nanoTime() - start;
-                        System.out.println("findOne: " + end / 1000000.0 + " ms");
+                        LOGGER.debug("findOne: " + end / 1000000.0 + " ms");
                     } catch (Exception ex) {
-                        System.out.println("ex:" + ex.getClass().getName() + " message:" + ex.getMessage());
+                        LOGGER.debug("ex:" + ex.getClass().getName() + " message:" + ex.getMessage());
                     }
                 });
         } finally {

@@ -27,6 +27,9 @@ targetCompatibility = 1.8
 compileJava.options.encoding = 'UTF-8'
 configurations { providedCompile }
 
+configurations.all {
+  exclude group: "commons-logging", module: "commons-logging"
+}
 
 dependencies {
   compile(
@@ -116,7 +119,9 @@ dependencies {
     "org.xerial:sqlite-jdbc:3.8.9",
     "com.datastax.cassandra:cassandra-driver-core:3.0.0",
     "com.datastax.cassandra:cassandra-driver-mapping:3.0.0",
-    "com.datastax.cassandra:cassandra-driver-extras:3.0.0"
+    "com.datastax.cassandra:cassandra-driver-extras:3.0.0",
+    "ch.qos.logback:logback-classic:$logbackVersion",
+    "ch.qos.logback:logback-core:$logbackVersion"
   )
 
   runtime(

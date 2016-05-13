@@ -16,6 +16,7 @@ import net.groshev.rest.utils.compress.CompressionUtils;
 import org.apache.commons.io.IOUtils;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,13 +36,14 @@ public class RESTTest {
      * @throws Exception If fails
      */
     @Test
+    @Ignore
     public void testRest() throws Exception {
 
         int maxSize = 100;
 
         List<Double> results = new ArrayList<>();
         // делаем POST-запрос
-        baseURI = "http://192.168.10.11";
+        baseURI = "http://127.0.0.1";
         port = 37015;
         log.info("testing server: {}:{}", baseURI, port);
 

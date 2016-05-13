@@ -44,7 +44,9 @@ dependencies {
     //Spring support, AOP interceptor, MVC handler interceptor
     "org.javasimon:javasimon-spring:$javasimonVersion",
     //Embedded Java Simon web console
-    "org.javasimon:javasimon-console-embed:$javasimonVersion"
+    "org.javasimon:javasimon-console-embed:$javasimonVersion",
+    "ch.qos.logback:logback-classic:$logbackVersion",
+    "ch.qos.logback:logback-core:$logbackVersion",
   )
 
   providedCompile(
