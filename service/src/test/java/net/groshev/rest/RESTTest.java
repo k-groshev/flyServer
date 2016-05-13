@@ -86,7 +86,7 @@ public class RESTTest {
         } catch (IOException e) {
             fail("decompression error");
         } catch (DataFormatException e) {
-            log.error("request decompression error on DataFormatException");
+            log.error("request skipped, not compressed");
             return null;
         }
         // проверяем на валидность
@@ -104,7 +104,7 @@ public class RESTTest {
         byte[] response =validatableResponse.asByteArray();
         long duarationNs = end - start;
         results.add(convertToMSecs(duarationNs));
-        log.info("duration ={} ms", convertToMSecs(duarationNs));
+        log.info("[{}]duration ={} ms",validatableResponse.getStatusCode(),  convertToMSecs(duarationNs));
         if (validatableResponse.getStatusCode() != 200){
             log.info("status: {}, {}", validatableResponse.getStatusCode(), validatableResponse.getBody().prettyPrint());
         }else {
