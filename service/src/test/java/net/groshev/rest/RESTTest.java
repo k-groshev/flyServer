@@ -11,6 +11,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 import java.util.zip.DataFormatException;
+
+import com.jayway.restassured.response.Response;
+import com.jayway.restassured.response.ValidatableResponse;
 import net.groshev.rest.utils.JSONUtils;
 import net.groshev.rest.utils.compress.CompressionUtils;
 import org.apache.commons.io.IOUtils;
@@ -43,7 +46,7 @@ public class RESTTest {
 
         List<Double> results = new ArrayList<>();
         // делаем POST-запрос
-        baseURI = "http://127.0.0.1";
+        baseURI = "http://192.168.10.11";
         port = 37015;
         log.info("testing server: {}:{}", baseURI, port);
 
@@ -83,7 +86,7 @@ public class RESTTest {
         } catch (IOException e) {
             fail("decompression error");
         } catch (DataFormatException e) {
-            log.error("decompression error on DataFormatException");
+            log.error("request decompression error on DataFormatException");
             return null;
         }
         // проверяем на валидность
@@ -91,31 +94,35 @@ public class RESTTest {
 
         // получаем ответ ()
         long start = System.nanoTime();
-        byte[] response =
+        Response validatableResponse =
             given()
                 .contentType("text/plain")
                 .body(request)
                 .when()
-                .post("/fly-zget")
-                .asByteArray();
+                .post("/fly-zget");
         long end = System.nanoTime();
+        byte[] response =validatableResponse.asByteArray();
         long duarationNs = end - start;
         results.add(convertToMSecs(duarationNs));
         log.info("duration ={} ms", convertToMSecs(duarationNs));
-        // пробуем декомпрессировать ответ
-        if (response.length >0) {
-            byte[] decompressedResponse = new byte[0];
-            try {
-                decompressedResponse = CompressionUtils.decompress(response);
-            } catch (IOException e) {
-                fail("response decompression error");
-            } catch (DataFormatException e) {
-                fail("response decompression error on DataFormatException");
+        if (validatableResponse.getStatusCode() != 200){
+            log.info("status: {}, {}", validatableResponse.getStatusCode(), validatableResponse.getBody().prettyPrint());
+        }else {
+            // пробуем декомпрессировать ответ
+            if (response.length > 0) {
+                byte[] decompressedResponse = new byte[0];
+                try {
+                    decompressedResponse = CompressionUtils.decompress(response);
+                } catch (IOException e) {
+                    fail("response decompression error");
+                } catch (DataFormatException e) {
+                    fail("response decompression error on DataFormatException");
+                }
+                // проверяем валидность полученного ответа json
+                assertTrue(JSONUtils.isJSONValid(new String(decompressedResponse)));
+            } else {
+                log.info("response size = 0");
             }
-            // проверяем валидность полученного ответа json
-            assertTrue(JSONUtils.isJSONValid(new String(decompressedResponse)));
-        }else{
-            log.info("response size = 0");
         }
         return null;
     }

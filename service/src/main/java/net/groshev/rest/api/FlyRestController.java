@@ -2,10 +2,7 @@ package net.groshev.rest.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.groshev.rest.beans.FlyArrayOutBean;
-import net.groshev.rest.beans.FlyMediaBean;
-import net.groshev.rest.beans.FlyOutBean;
 import net.groshev.rest.requests.FlyArrayRequestBean;
-import net.groshev.rest.requests.FlyRequestBean;
 import net.groshev.rest.service.FlyDBService;
 import net.groshev.rest.utils.compress.CompressionUtils;
 import org.slf4j.Logger;
@@ -13,28 +10,30 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 
 @RestController
 public class FlyRestController extends BaseRestController {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(FlyRestController.class);
     @Autowired
     private FlyDBService dbService;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FlyRestController.class);
     @RequestMapping(value = "/fly-zget",
             method = RequestMethod.POST)
     @ResponseBody
     public Object getBean(HttpServletRequest request) throws IOException {
-        final long start = System.nanoTime();
+        // final long start = System.nanoTime();
         String w = getRequestBody(request);
         FlyArrayRequestBean requestBeans = null;
         ObjectMapper mapper = new ObjectMapper();
@@ -49,7 +48,7 @@ public class FlyRestController extends BaseRestController {
 
         // криптуем выход
         StringWriter writer = new StringWriter();
-        mapper.writeValue(writer,bean);
+        mapper.writeValue(writer, bean);
         String json = writer.toString();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         OutputStream out = new DeflaterOutputStream(baos, new Deflater(Deflater.BEST_COMPRESSION));
@@ -57,17 +56,17 @@ public class FlyRestController extends BaseRestController {
         try {
             CompressionUtils.shovelInToOut(in, out);
         } catch (IOException e) {
-            return  response500(e.getMessage());
+            return response500(e.getMessage());
         }
         in.close();
         out.close();
         baos.close();
-        final long end = System.nanoTime() - start;
-        LOGGER.debug("--> rest result got in: " + end / 1000000.0 + "ms");
+        //  final long end = System.nanoTime() - start;
+        //LOGGER.debug("--> rest result got in: " + end / 1000000.0 + "ms");
         return new ResponseEntity<byte[]>(baos.toByteArray(), HttpStatus.OK);
     }
 
-    private String getRequestBody (final HttpServletRequest request){
+    private String getRequestBody(final HttpServletRequest request) {
 
         HttpServletRequestWrapper requestWrapper = new HttpServletRequestWrapper(request);
         StringBuilder stringBuilder = new StringBuilder();

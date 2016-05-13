@@ -23,8 +23,8 @@ public class CompressionUtils {
         }
         outputStream.close();
         byte[] output = outputStream.toByteArray();
-        LOG.debug("Original: " + data.length / 1024 + " Kb");
-        LOG.debug("Compressed: " + output.length / 1024 + " Kb");
+        // LOG.debug("Original: " + data.length / 1024 + " Kb");
+        //LOG.debug("Compressed: " + output.length / 1024 + " Kb");
         return output;
     }
 
@@ -39,7 +39,7 @@ public class CompressionUtils {
         }
         outputStream.close();
         byte[] output = outputStream.toByteArray();
-        LOG.debug("decompress: " + data.length+ " -> " + output.length+" bytes");
+        //LOG.debug("decompress: " + data.length+ " -> " + output.length+" bytes");
         return output;
     }
 
@@ -48,8 +48,7 @@ public class CompressionUtils {
      * Compresses a file with zlib compression.
      */
     public static void compressFile(File raw, File compressed)
-            throws IOException
-    {
+            throws IOException {
         InputStream in = new FileInputStream(raw);
         OutputStream out =
                 new DeflaterOutputStream(new FileOutputStream(compressed));
@@ -62,8 +61,7 @@ public class CompressionUtils {
      * Decompresses a zlib compressed file.
      */
     public static void decompressFile(File compressed, File raw)
-            throws IOException
-    {
+            throws IOException {
         InputStream in =
                 new InflaterInputStream(new FileInputStream(compressed));
         OutputStream out = new FileOutputStream(raw);
@@ -76,11 +74,10 @@ public class CompressionUtils {
      * Shovels all data from an input stream to an output stream.
      */
     public static void shovelInToOut(InputStream in, OutputStream out)
-            throws IOException
-    {
+            throws IOException {
         byte[] buffer = new byte[1000];
         int len;
-        while((len = in.read(buffer)) > 0) {
+        while ((len = in.read(buffer)) > 0) {
             out.write(buffer, 0, len);
         }
     }

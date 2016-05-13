@@ -17,7 +17,9 @@ apply plugin: 'org.akhikhl.gretty'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-
+war {
+  archiveName = "ROOT.war"
+}
 
 gretty {
   port = 37015
