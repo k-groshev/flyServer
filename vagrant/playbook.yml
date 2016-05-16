@@ -17,7 +17,7 @@
     - java
     - cassandra
 #    - opscenter
-    - spark
+#    - spark
     - tomcat
 
   tasks:
@@ -30,14 +30,14 @@
     - name: install ru_RU
       apt: name=language-pack-ru state=present update_cache=yes
 
-    - name: start a spark master
-      command: nohup /opt/{{ spark_version }}/sbin/start-master.sh
-      tags:
-        - spark
+#   - name: start a spark master
+#      command: nohup /opt/{{ spark_version }}/sbin/start-master.sh
+#      tags:
+#        - spark
 
-    - name: start a spark worker
-      command: nohup /opt/{{ spark_version }}/bin/spark-class org.apache.spark.deploy.worker.Worker  spark://{{ vagrant_ip }}:7077
-      async: 315360000
-      poll: 0
-      tags:
-        - spark
+#    - name: start a spark worker
+#      command: nohup /opt/{{ spark_version }}/bin/spark-class org.apache.spark.deploy.worker.Worker  spark://{{ vagrant_ip }}:7077
+#      async: 315360000
+#      poll: 0
+#      tags:
+#        - spark
