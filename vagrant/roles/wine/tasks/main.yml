@@ -1,0 +1,16 @@
+- name: add arch
+  sudo: yes
+  shell: dpkg --add-architecture i386
+
+- name: add repository
+  sudo: yes
+  apt_repository: repo='ppa:ubuntu-wine'
+
+- name: apt-get update
+  shell: sudo apt-get update
+
+- name: accept license fro ttf
+  shell: echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | sudo debconf-set-selections
+
+- name: install
+  shell: sudo apt-get install -y wine:i386
