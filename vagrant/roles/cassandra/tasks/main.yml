@@ -8,7 +8,7 @@
   apt_key: keyserver=pgp.mit.edu id=F758CE318D77295D
 
 - name: add the other key for cassandra
-  apt_key: keyserver=pgp.mit.edu id=2B5C1B00
+  apt_key: url=http://debian.datastax.com/debian/repo_key state=present
 
 - name: install cassandra
   apt: name=cassandra state=present update_cache=yes force=yes
@@ -21,4 +21,3 @@
 
 - name: alias spark shell to add the driver to jars
   lineinfile: dest=/home/vagrant/.bashrc  line='alias cqlsh="cqlsh {{ vagrant_ip }}"'
-
