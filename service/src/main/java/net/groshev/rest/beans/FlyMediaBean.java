@@ -1,6 +1,7 @@
 package net.groshev.rest.beans;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import lombok.Data;
 
 /**
  * Created with IntelliJ IDEA.

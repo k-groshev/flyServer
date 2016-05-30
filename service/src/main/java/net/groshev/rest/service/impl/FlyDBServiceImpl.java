@@ -5,11 +5,9 @@ import net.groshev.rest.domain.repository.FlyRepository;
 import net.groshev.rest.requests.FlyArrayRequestBean;
 import net.groshev.rest.requests.FlyRequestBean;
 import net.groshev.rest.service.FlyDBService;
+import net.groshev.rest.utils.CassandraUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,30 +23,41 @@ import java.util.stream.Collectors;
  * @version $Id$
  * @since 1.0
  */
-@Service
 public class FlyDBServiceImpl implements FlyDBService {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(FlyDBServiceImpl.class);
 
-    @Autowired
-    @Qualifier("flyCassandraRepository")
     private FlyRepository repository;
 
     @Override
+    public void setRepository(FlyRepository repository) {
+        this.repository = repository;
+    }
+
+    @Override
     public FlyArrayOutBean processByKey(final FlyArrayRequestBean bean) {
+        ExecutorService pool = Executors.newFixedThreadPool(bean.getArray().size() + 2);
+        long start = System.nanoTime();
         // ищем те, которые есть в базе
         FlyArrayOutBean outBean = repository.find(bean);
+        long findPoint = System.nanoTime();
+        LOGGER.info("find [{}] cost: {} ms", bean.getArray().size(),
+                CassandraUtils.convertToMSecs(findPoint - start));
         // для найденых делаем update счетчиков
-        updateByKey(outBean);
+        updateByKey(outBean, pool);
+        long updatePoint = System.nanoTime();
+        LOGGER.info("update cost: {} ms", CassandraUtils.convertToMSecs(updatePoint - findPoint));
         //для ненайденных делаем вставку
         insertByKey(bean, outBean);
-
+        long insertPoint = System.nanoTime();
+        LOGGER.info("insert cost: {} ms", CassandraUtils.convertToMSecs(insertPoint - updatePoint));
         return outBean;
     }
 
-    private void updateByKey(final FlyArrayOutBean bean) {
-        ExecutorService pool = Executors.newFixedThreadPool(1);
-        final long timeoutMs = 100;
+    private void updateByKey(final FlyArrayOutBean bean, final ExecutorService pool) {
+
+        // TODO: надо распараллелить update и попробовать
+
 
         CompletableFuture<Void> future
                 = CompletableFuture.supplyAsync(() -> repository.update(bean), pool);

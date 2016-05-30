@@ -1,31 +1,31 @@
 package net.groshev.rest;
 
-import static com.jayway.restassured.RestAssured.baseURI;
-import static com.jayway.restassured.RestAssured.given;
-import static com.jayway.restassured.RestAssured.port;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.stream.IntStream;
-import java.util.zip.DataFormatException;
-
 import com.jayway.restassured.response.Response;
-import com.jayway.restassured.response.ValidatableResponse;
 import net.groshev.rest.utils.JSONUtils;
 import net.groshev.rest.utils.compress.CompressionUtils;
 import org.apache.commons.io.IOUtils;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.zip.DataFormatException;
+
+import static com.jayway.restassured.RestAssured.*;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 /**
  * Created with IntelliJ IDEA.
+ *
  * @author Konstantin Groshev (mail@groshev.net)
  * @version $Id$
  * @since 1.0
@@ -34,8 +34,14 @@ public class RESTTest {
 
     private static final Logger log = LoggerFactory.getLogger(RESTTest.class);
 
+    private static double convertToMSecs(long nanos) {
+        double coeff = 1000000.0;
+        return (double) nanos / coeff;
+    }
+
     /**
      * ${CLASS} can work.
+     *
      * @throws Exception If fails
      */
     @Test
@@ -50,22 +56,36 @@ public class RESTTest {
         port = 37015;
         log.info("testing server: {}:{}", baseURI, port);
 
+
         ExecutorService pool = Executors.newFixedThreadPool(50);
-        IntStream.rangeClosed(1, maxSize).boxed().map(i ->
-            CompletableFuture.supplyAsync(() -> {
-                String fileName = "flylinkdc-extjson-zlib-file-" + i + ".json.zlib";
-                testOneRequest(results, fileName);
-                return null;
-            }, pool)
-        ).forEach(future ->{
-            try {
-                future.get();
-            } catch (Exception ex) {
-                fail("ex: "+ ex.getClass().getName() + " message:" + ex.getMessage());
-            }
-        });
+        List<Callable<Void>> callables = IntStream.rangeClosed(1, maxSize).boxed()
+                .map(i -> {
+                    String fileName = "flylinkdc-extjson-zlib-file-" + i + ".json.zlib";
+                    return (Callable<Void>) () -> testOneRequest(results, fileName);
+                })
+                .collect(Collectors.toList());
+
+        try {
+            pool.invokeAll(callables)
+                    .stream()
+                    .map(future -> {
+                        try {
+                            return future.get();
+                        } catch (Exception ex) {
+                            log.debug("ex:" + ex.getClass().getName() + " message:" + ex.getMessage());
+                            throw new IllegalStateException(ex);
+                        }
+                    })
+                    .forEach(e -> System.out.println("+"));
+        } catch (InterruptedException ex) {
+            log.debug("ex:" + ex.getClass().getName() + " message:" + ex.getMessage());
+        } finally {
+            pool.shutdown();
+        }
+
+
         double average = results.stream().mapToDouble(Double::valueOf).average()
-            .getAsDouble();
+                .getAsDouble();
         log.info("avg request ({}) time: {} ms", results.size(), average);
 
     }
@@ -75,7 +95,7 @@ public class RESTTest {
         byte[] request = new byte[0];
         try {
             request = IOUtils.toByteArray(
-                this.getClass().getResourceAsStream(fileName));
+                    this.getClass().getResourceAsStream(fileName));
         } catch (Exception e) {
             fail("file open error");
         }
@@ -95,19 +115,19 @@ public class RESTTest {
         // получаем ответ ()
         long start = System.nanoTime();
         Response validatableResponse =
-            given()
-                .contentType("text/plain")
-                .body(request)
-                .when()
-                .post("/fly-zget");
+                given()
+                        .contentType("text/plain")
+                        .body(request)
+                        .when()
+                        .post("/fly-zget");
         long end = System.nanoTime();
-        byte[] response =validatableResponse.asByteArray();
+        byte[] response = validatableResponse.asByteArray();
         long duarationNs = end - start;
         results.add(convertToMSecs(duarationNs));
-        log.info("[{}]duration ={} ms",validatableResponse.getStatusCode(),  convertToMSecs(duarationNs));
-        if (validatableResponse.getStatusCode() != 200){
+        log.info("[{}]duration ={} ms", validatableResponse.getStatusCode(), convertToMSecs(duarationNs));
+        if (validatableResponse.getStatusCode() != 200) {
             log.info("status: {}, {}", validatableResponse.getStatusCode(), validatableResponse.getBody().prettyPrint());
-        }else {
+        } else {
             // пробуем декомпрессировать ответ
             if (response.length > 0) {
                 byte[] decompressedResponse = new byte[0];
@@ -125,10 +145,5 @@ public class RESTTest {
             }
         }
         return null;
-    }
-
-    private static double convertToMSecs(long nanos) {
-        double coeff = 1000000.0;
-        return (double) nanos / coeff;
     }
 }

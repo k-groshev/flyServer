@@ -93,7 +93,7 @@ public class CompressionUtils {
                 + "*" + sbytes.length;
     }
 
-    public static String decompress(String s) {
+/*    public static String decompress(String s) {
         int pos = s.lastIndexOf('*');
         int len = Integer.parseInt(s.substring(pos + 1));
         s = s.substring(0, pos);
@@ -109,5 +109,5 @@ public class CompressionUtils {
             throw new IllegalArgumentException(e);
         }
         return new String(decomp, StandardCharsets.UTF_8);
-    }
+    }*/
 }

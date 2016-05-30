@@ -69,4 +69,8 @@ public class CassandraUtils {
     public static <T> T nvl(T value, T def) {
         return Optional.ofNullable(value).orElse(def);
     }
+    public static double convertToMSecs(long nanos) {
+        double coeff = 1000000.0;
+        return (double) nanos / coeff;
+    }
 }

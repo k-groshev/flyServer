@@ -1,5 +1,3 @@
 rootProject.name = 'ppa-rest'
 
-include 'common'
 include 'service'
-include 'web'

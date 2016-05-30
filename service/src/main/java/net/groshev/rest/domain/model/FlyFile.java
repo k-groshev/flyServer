@@ -1,4 +1,4 @@
-package net.groshev.rest.common.model;
+package net.groshev.rest.domain.model;
 
 /**
  * CREATE TABLE fly_file (  id             integer primary key AUTOINCREMENT not null,

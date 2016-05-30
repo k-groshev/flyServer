@@ -2,7 +2,7 @@ package net.groshev.rest.mappers;
 
 import net.groshev.rest.beans.FlyMediaBean;
 import net.groshev.rest.beans.FlyOutBean;
-import net.groshev.rest.common.model.FlyFile;
+import net.groshev.rest.domain.model.FlyFile;
 
 /**
  * Created with IntelliJ IDEA.

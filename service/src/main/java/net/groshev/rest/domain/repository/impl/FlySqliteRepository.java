@@ -8,7 +8,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 import net.groshev.rest.beans.FlyArrayOutBean;
-import net.groshev.rest.common.model.FlyFile;
+import net.groshev.rest.beans.FlyOutBean;
+import net.groshev.rest.domain.model.FlyFile;
 import net.groshev.rest.domain.repository.FlyRepository;
 import net.groshev.rest.mappers.FlyOutBeanMapper;
 import net.groshev.rest.requests.FlyArrayRequestBean;
@@ -16,7 +17,6 @@ import net.groshev.rest.requests.FlyRequestBean;
 import net.groshev.rest.utils.JdbcUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Repository;
 
 /**
  * Created with IntelliJ IDEA.
@@ -24,7 +24,6 @@ import org.springframework.stereotype.Repository;
  * @version $Id$
  * @since 1.0
  */
-@Repository
 public class FlySqliteRepository implements FlyRepository {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(FlySqliteRepository.class);
@@ -83,6 +82,11 @@ public class FlySqliteRepository implements FlyRepository {
         } catch (Exception e) {
             LOGGER.error(e.getClass().getName() + ": " + e.getMessage());
         }
+        return null;
+    }
+
+    @Override
+    public Void update(FlyOutBean bean) {
         return null;
     }
 
