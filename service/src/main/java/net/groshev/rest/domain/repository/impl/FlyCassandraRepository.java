@@ -16,21 +16,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class FlyCassandraRepository implements FlyRepository {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(FlyCassandraRepository.class);
     public static final double coeff = 1000000.0;
-
+    Session session;
+    PreparedStatement statementFind;
+    BoundStatement boundStatementFind;
     private String hostPrimary = "192.168.10.11";
     private String hostSecondary = "192.168.10.12";
     private int port = 9042;
     private String keyspace = "fly";
     private Cluster cluster;
-    Session session;
-    PreparedStatement statementFind;
-    BoundStatement boundStatementFind;
 
     public FlyCassandraRepository() {
         buildCluster();
@@ -105,11 +105,11 @@ public class FlyCassandraRepository implements FlyRepository {
 
         String query = "update fly_file set count_query=count_query+1, last_date=toUnixTimestamp(now()) where tth in (";
         query += bean.getArray().stream()
-                .map(e -> "'"+e.getTth()+ "'")
+                .map(e -> "'" + e.getTth() + "'")
                 .collect(Collectors.joining(","));
         query += ") and file_size in (";
         query += bean.getArray().stream()
-                .map(e -> String.format("%d",e.getSize()))
+                .map(e -> String.format("%d", e.getSize()))
                 .collect(Collectors.joining(","));
         query += ");";
 
@@ -153,19 +153,18 @@ public class FlyCassandraRepository implements FlyRepository {
         // long start = System.nanoTime();
         FlyArrayOutBean outBean = new FlyArrayOutBean();
         outBean.setArray(new ArrayList<>());
-        String query = "SELECT * FROM fly.fly_file WHERE  tth in (";
-        query += bean.getArray().stream()
-                .map(e -> "'"+e.getTth()+ "'")
-                .collect(Collectors.joining(","));
-        query += ") and file_size in (";
-        query += bean.getArray().stream()
-                .map(e -> String.format("%d",e.getSize()))
-                .collect(Collectors.joining(","));
-        query += ");";
 
-        ResultSet results = session.execute(query);
-        for (Row row : results) {
+        PreparedStatement statement = session.prepare("SELECT * FROM fly.fly_file WHERE  tth = ? and file_size = ?; ");
 
+        List<ResultSetFuture> features = new ArrayList<>();
+        for (FlyRequestBean requestBean : bean.getArray()) {
+            ResultSetFuture resultSetFuture = session.executeAsync(statement.bind(requestBean.getTth(), requestBean.getSize()));
+            features.add(resultSetFuture);
+        }
+
+        for (ResultSetFuture feature : features) {
+            ResultSet rows = feature.getUninterruptibly();
+            Row row = rows.one();
             // получаем файл из sqlite
             FlyFile flyFile = new FlyFile();
             flyFile.setFly_audio(CassandraUtils.getOptionalString(row, "fly_audio"));
@@ -192,8 +191,50 @@ public class FlyCassandraRepository implements FlyRepository {
 
             FlyOutBeanMapper mapper = new FlyOutBeanMapper();
             outBean.getArray().add(mapper.map(flyFile));
-        }
 
+
+        }
+//
+//        String query = "SELECT * FROM fly.fly_file WHERE  tth in (";
+//        query += bean.getArray().stream()
+//                .map(e -> "'" + e.getTth() + "'")
+//                .collect(Collectors.joining(","));
+//        query += ") and file_size in (";
+//        query += bean.getArray().stream()
+//                .map(e -> String.format("%d", e.getSize()))
+//                .collect(Collectors.joining(","));
+//        query += ");";
+//
+//        ResultSet results = session.execute(query);
+//        for (Row row : results) {
+//
+//            // получаем файл из sqlite
+//            FlyFile flyFile = new FlyFile();
+//            flyFile.setFly_audio(CassandraUtils.getOptionalString(row, "fly_audio"));
+//            flyFile.setFly_audio_br(CassandraUtils.getOptionalString(row, "fly_audio_br"));
+//            flyFile.setFly_video(CassandraUtils.getOptionalString(row, "fly_video"));
+//            flyFile.setFly_xy(CassandraUtils.getOptionalString(row, "fly_xy"));
+//
+//            flyFile.setId(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "id"), 0L));
+//            flyFile.setTth(CassandraUtils.getOptionalString(row, "tth"));
+//            flyFile.setFile_size(CassandraUtils.getOptionalLong(row, "file_size"));
+//
+//            flyFile.setFirst_date(CassandraUtils.getOptionalLong(row, "first_date"));
+//            flyFile.setLast_date(CassandraUtils.getOptionalString(row, "last_date"));
+//
+//            flyFile.setCount_plus(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_plus"), 0L));
+//            flyFile.setCount_minus(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_minus"), 0L));
+//            flyFile.setCount_fake(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_fake"), 0L));
+//            flyFile.setCount_download(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_download"), 0L));
+//            flyFile.setCount_upload(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_upload"), 0L));
+//            flyFile.setCount_query(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_query"), 1L));
+//            flyFile.setCount_media(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_media"), 0L));
+//            flyFile.setCount_antivirus(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_antivirus"), 0L));
+//            // пишем в кассандру
+//
+//            FlyOutBeanMapper mapper = new FlyOutBeanMapper();
+//            outBean.getArray().add(mapper.map(flyFile));
+//        }
 
 
 //
@@ -245,8 +286,8 @@ public class FlyCassandraRepository implements FlyRepository {
         long start = System.nanoTime();
 
         ResultSet results = session.execute(boundStatement.bind()
-                .setString("tth",e.getTth())
-                .setLong("size",e.getSize()));
+                .setString("tth", e.getTth())
+                .setLong("size", e.getSize()));
         double end = (System.nanoTime() - start) / coeff;
         LOGGER.debug("find one query {} ms", end);
 
