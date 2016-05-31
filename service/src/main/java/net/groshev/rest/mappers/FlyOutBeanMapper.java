@@ -26,8 +26,6 @@ public class FlyOutBeanMapper implements Mapper<FlyFile, FlyOutBean> {
         outBean.setTth(object.getTth());
         outBean.setSize(object.getFile_size());
 
-        outBean.setFirst_date(object.getFirst_date());
-        outBean.setLast_date(object.getLast_date());
         return outBean;
     }
 

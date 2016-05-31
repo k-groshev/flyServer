@@ -25,16 +25,10 @@ public class FlyFile {
     private String tth;
     private long file_size;
 
-    private long count_plus;
-    private long count_minus;
-    private long count_fake;
-    private long count_download;
-    private long count_upload;
-    private long count_query;
-    private long count_media;
-    private long count_antivirus;
     private long first_date;
-    private String last_date;
+    private Long last_date;
+
+    private FlyFileCounters counters;
 
     private String fly_audio;
     private String fly_audio_br;
@@ -65,70 +59,6 @@ public class FlyFile {
         this.file_size = file_size;
     }
 
-    public long getCount_plus() {
-        return this.count_plus;
-    }
-
-    public void setCount_plus(final long count_plus) {
-        this.count_plus = count_plus;
-    }
-
-    public long getCount_minus() {
-        return this.count_minus;
-    }
-
-    public void setCount_minus(final long count_minus) {
-        this.count_minus = count_minus;
-    }
-
-    public long getCount_fake() {
-        return this.count_fake;
-    }
-
-    public void setCount_fake(final long count_fake) {
-        this.count_fake = count_fake;
-    }
-
-    public long getCount_download() {
-        return this.count_download;
-    }
-
-    public void setCount_download(final long count_download) {
-        this.count_download = count_download;
-    }
-
-    public long getCount_upload() {
-        return this.count_upload;
-    }
-
-    public void setCount_upload(final long count_upload) {
-        this.count_upload = count_upload;
-    }
-
-    public long getCount_query() {
-        return this.count_query;
-    }
-
-    public void setCount_query(final long count_query) {
-        this.count_query = count_query;
-    }
-
-    public long getCount_media() {
-        return this.count_media;
-    }
-
-    public void setCount_media(final long count_media) {
-        this.count_media = count_media;
-    }
-
-    public long getCount_antivirus() {
-        return this.count_antivirus;
-    }
-
-    public void setCount_antivirus(final long count_antivirus) {
-        this.count_antivirus = count_antivirus;
-    }
-
     public long getFirst_date() {
         return this.first_date;
     }
@@ -137,11 +67,11 @@ public class FlyFile {
         this.first_date = first_date;
     }
 
-    public String getLast_date() {
+    public Long getLast_date() {
         return this.last_date;
     }
 
-    public void setLast_date(final String last_date) {
+    public void setLast_date(final Long last_date) {
         this.last_date = last_date;
     }
 
@@ -177,20 +107,20 @@ public class FlyFile {
         this.fly_xy = fly_xy;
     }
 
+    public FlyFileCounters getCounters() {
+        return this.counters;
+    }
+
+    public void setCounters(final FlyFileCounters counters) {
+        this.counters = counters;
+    }
+
     @Override
     public String toString() {
         return "FlyFile{" +
             "id=" + id +
             ", tth='" + tth + '\'' +
             ", file_size=" + file_size +
-            ", count_plus=" + count_plus +
-            ", count_minus=" + count_minus +
-            ", count_fake=" + count_fake +
-            ", count_download=" + count_download +
-            ", count_upload=" + count_upload +
-            ", count_query=" + count_query +
-            ", count_media=" + count_media +
-            ", count_antivirus=" + count_antivirus +
             ", first_date=" + first_date +
             ", last_date='" + last_date + '\'' +
             ", fly_audio='" + fly_audio + '\'' +

@@ -55,19 +55,7 @@ public class FlyDBServiceImpl implements FlyDBService {
     }
 
     private void updateByKey(final FlyArrayOutBean bean, final ExecutorService pool) {
-
-        // TODO: надо распараллелить update и попробовать
-
-
-        CompletableFuture<Void> future
-                = CompletableFuture.supplyAsync(() -> repository.update(bean), pool);
-        try {
-            future.get();
-        } catch (Exception ex) {
-            LOGGER.debug("ex:" + ex.getClass().getName() + " message:" + ex.getMessage());
-        } finally {
-            pool.shutdown();
-        }
+        repository.update(bean);
     }
 
     private void insertByKey(final FlyArrayRequestBean beanIn, final FlyArrayOutBean beanOut) {

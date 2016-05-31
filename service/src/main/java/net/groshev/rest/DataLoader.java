@@ -26,7 +26,7 @@ import java.util.Locale;
  */
 public class DataLoader {
     public static final int PORT = 9042;
-    public static final String ADDRESS = "192.168.10.11";
+    public static final String ADDRESS = "127.0.0.1";
     public static final String KEYSPACE = "fly";
 
     public static final double convertToMSecs(final long nanos) {
@@ -45,6 +45,8 @@ public class DataLoader {
                         new TokenAwarePolicy(DCAwareRoundRobinPolicy.builder().build()))
                 .build();
         Session session = cluster.connect("system");
+        // drop keyspace
+        session.execute("drop keyspace fly;");
 
         String cqlStatement = "CREATE KEYSPACE fly WITH " +
                 "replication = {'class':'SimpleStrategy','replication_factor':2}";
@@ -93,13 +95,13 @@ public class DataLoader {
         Cluster cluster1 = loader.getCluster();
         Session session1 = cluster1.connect(KEYSPACE);
         // Insert one record into the users table
-        PreparedStatement statement = session1.prepare("INSERT INTO fly_file" +
+        PreparedStatement statement = session1.prepare("INSERT INTO fly_file " +
                 "(id, tth, file_size, first_date, last_date, fly_audio," +
                 " fly_audio_br,  fly_video, fly_xy)" +
                 "VALUES " +
                 "(?,?,?,?,?,?,?,?,?);");
         BoundStatement boundStatement = new BoundStatement(statement);
-        PreparedStatement statementCounters = session1.prepare("UPDATE fly_file_counters" +
+        PreparedStatement statementCounters = session1.prepare("UPDATE fly_file_counters " +
                 "SET count_plus = count_plus + ?, " +
                 "count_minus = count_minus + ?, " +
                 "count_fake = count_fake + ?, " +
@@ -107,7 +109,7 @@ public class DataLoader {
                 "count_upload = count_upload + ?, " +
                 "count_query = count_query + ?, " +
                 "count_media = count_media + ?, " +
-                "count_antivirus = count_antivirus +?)" +
+                "count_antivirus = count_antivirus + ? " +
                 "WHERE tth = ? and  file_size = ?");
         BoundStatement boundStatementCounters = new BoundStatement(statementCounters);
 
@@ -121,8 +123,8 @@ public class DataLoader {
 
         try {
             Class.forName("org.sqlite.JDBC");
-            //String dbPath = "C:\\java_ee\\apps\\rest-test\\db\\fly-server-db.sqlite";
-            String dbPath = "/Users/kgroshev/java_ee/apps/rest-test/db/fly-server-db.sqlite";
+            String dbPath = "C:\\java_ee\\apps\\rest-test\\db\\fly-server-db.sqlite";
+            //String dbPath = "/Users/kgroshev/java_ee/apps/rest-test/db/fly-server-db.sqlite";
             c = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
             c.setAutoCommit(false);
             System.out.println("Opened database successfully");
