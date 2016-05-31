@@ -1,9 +1,20 @@
 package net.groshev.rest.domain.repository.impl;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Session;
 import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 import com.datastax.driver.core.policies.DefaultRetryPolicy;
 import com.datastax.driver.core.policies.TokenAwarePolicy;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
 import net.groshev.rest.beans.FlyArrayOutBean;
 import net.groshev.rest.beans.FlyOutBean;
 import net.groshev.rest.domain.model.FlyFile;
@@ -15,14 +26,6 @@ import net.groshev.rest.utils.CassandraUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
-
 public class FlyCassandraRepository implements FlyRepository {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(FlyCassandraRepository.class);
@@ -32,10 +35,7 @@ public class FlyCassandraRepository implements FlyRepository {
     PreparedStatement statementUpdate;
     PreparedStatement statementUpdateCounters;
     PreparedStatement statementInsert;
-    private String hostPrimary = "127.0.0.1";
-    private String hostSecondary = "192.168.10.12";
-    private int port = 9042;
-    private String keyspace = "fly";
+    private String keyspace;
     private Cluster cluster;
 
     public FlyCassandraRepository() {
@@ -49,17 +49,42 @@ public class FlyCassandraRepository implements FlyRepository {
     }
 
     private Cluster buildCluster() {
+        String hostPrimary;
+        String hostSecondary;
+        int port;
+        Properties prop = new Properties();
+        try (InputStream input = getClass().getClassLoader().getResourceAsStream("conf/env/dev/config.properties")) {
+            prop.load(input);
+            hostPrimary = prop.getProperty("cassandra.host.primary");
+            hostSecondary = prop.getProperty("cassandra.host.second");
+            port = Integer.valueOf(prop.getProperty("cassandra.port"));
+            keyspace = prop.getProperty("cassandra.keyspace");
+
+        } catch (FileNotFoundException e) {
+            throw new IllegalStateException(e);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
         return Cluster
-                .builder()
-                .addContactPoint(hostPrimary)
-//                .addContactPoint(hostSecondary)
-                .withPort(port)
-                .withRetryPolicy(DefaultRetryPolicy.INSTANCE)
-                .withLoadBalancingPolicy(
-                        new TokenAwarePolicy(DCAwareRoundRobinPolicy.builder().build()))
-                .build();
+            .builder()
+            .addContactPoint(hostPrimary)
+            .addContactPoint(hostSecondary)
+            .withPort(port)
+            .withRetryPolicy(DefaultRetryPolicy.INSTANCE)
+            .withLoadBalancingPolicy(
+                new TokenAwarePolicy(DCAwareRoundRobinPolicy.builder().build()))
+            .build();
     }
 
+    private Cluster getCluster() {
+        //long start = System.nanoTime();
+        if (cluster == null) {
+            cluster = buildCluster();
+        }
+        //long end = System.nanoTime() - start;
+        //LOGGER.debug("cluster got in: " + end / 1000000.0 + " ms");
+        return cluster;
+    }
 
     public void closeCluster() {
         if (cluster != null) {
@@ -74,25 +99,14 @@ public class FlyCassandraRepository implements FlyRepository {
         //long start = System.nanoTime();
         // Connect to the cluster
 
-
         session.executeAsync(statementInsert.bind(
-                bean.getTth(),
-                bean.getSize()));
+            bean.getTth(),
+            bean.getSize()));
 
         LOGGER.debug("inserted record:" + bean.toString());
         //long end = System.nanoTime() - start;
         //LOGGER.debug("insertOne: " + end / 1000000.0 + " ms");
         return null;
-    }
-
-    private Cluster getCluster() {
-        //long start = System.nanoTime();
-        if (cluster == null) {
-            cluster = buildCluster();
-        }
-        //long end = System.nanoTime() - start;
-        //LOGGER.debug("cluster got in: " + end / 1000000.0 + " ms");
-        return cluster;
     }
 
     @Override
@@ -113,7 +127,6 @@ public class FlyCassandraRepository implements FlyRepository {
         // long start = System.nanoTime();
         FlyArrayOutBean outBean = new FlyArrayOutBean();
         outBean.setArray(new ArrayList<>());
-
 
         List<ResultSetFuture> features = new ArrayList<>();
         for (FlyRequestBean requestBean : bean.getArray()) {
