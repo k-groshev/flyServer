@@ -17,7 +17,5 @@ public interface FlyRepository {
 
     Void update(final FlyArrayOutBean bean);
 
-    Void update(final FlyOutBean bean);
-
     FlyArrayOutBean find(final FlyArrayRequestBean bean);
 }

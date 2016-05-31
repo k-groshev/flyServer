@@ -8,6 +8,7 @@ import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 import com.datastax.driver.core.policies.DefaultRetryPolicy;
 import com.datastax.driver.core.policies.TokenAwarePolicy;
 import net.groshev.rest.domain.model.FlyFile;
+import net.groshev.rest.domain.model.FlyFileCounters;
 import net.groshev.rest.utils.JdbcUtils;
 
 import java.sql.*;
@@ -55,26 +56,33 @@ public class DataLoader {
                 "id bigint, " +
                 "tth text, " +
                 "file_size bigint, " +
-                "count_plus bigint, " +
-                "count_minus bigint, " +
-                "count_fake bigint, " +
-                "count_download bigint," +
-                "count_upload bigint, " +
-                "count_query bigint, " +
                 "first_date bigint, " +
-                "last_date text, " +
+                "last_date bigint, " +
                 "fly_audio text," +
                 "fly_audio_br text," +
                 "fly_video text, " +
                 "fly_xy text,  " +
-                "count_media bigint, " +
-                "count_antivirus bigint," +
                 "PRIMARY KEY (tth, file_size))" +
                 "WITH compression =" +
                 "    { 'sstable_compression' : 'DeflateCompressor', 'chunk_length_kb' : 64 }" +
                 "  AND compaction =" +
                 "    { 'class' : 'LeveledCompactionStrategy' };";
         session.execute(cqlStatementCrtTable);
+
+        cqlStatementCrtTable = "CREATE TABLE fly_file_counters (" +
+                "tth text, " +
+                "file_size bigint, " +
+                "count_plus counter, " +
+                "count_minus counter, " +
+                "count_fake counter, " +
+                "count_download counter," +
+                "count_upload counter, " +
+                "count_query counter, " +
+                "count_media counter, " +
+                "count_antivirus counter," +
+                "PRIMARY KEY (tth, file_size));";
+        session.execute(cqlStatementCrtTable);
+
         session.close();
         // Clean up the connection by closing it
         cluster.close();
@@ -86,12 +94,25 @@ public class DataLoader {
         Session session1 = cluster1.connect(KEYSPACE);
         // Insert one record into the users table
         PreparedStatement statement = session1.prepare("INSERT INTO fly_file" +
-                "(id, tth, file_size, count_plus, count_minus, count_fake, count_download," +
-                " count_upload, count_query, first_date, last_date, fly_audio," +
-                " fly_audio_br,  fly_video, fly_xy,  count_media, count_antivirus)" +
+                "(id, tth, file_size, first_date, last_date, fly_audio," +
+                " fly_audio_br,  fly_video, fly_xy)" +
                 "VALUES " +
-                "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
+                "(?,?,?,?,?,?,?,?,?);");
         BoundStatement boundStatement = new BoundStatement(statement);
+        PreparedStatement statementCounters = session1.prepare("UPDATE fly_file_counters" +
+                "SET count_plus = count_plus + ?, " +
+                "count_minus = count_minus + ?, " +
+                "count_fake = count_fake + ?, " +
+                "count_download = count_download + ?," +
+                "count_upload = count_upload + ?, " +
+                "count_query = count_query + ?, " +
+                "count_media = count_media + ?, " +
+                "count_antivirus = count_antivirus +?)" +
+                "WHERE tth = ? and  file_size = ?");
+        BoundStatement boundStatementCounters = new BoundStatement(statementCounters);
+
+
+
         DecimalFormat formatter = (DecimalFormat) NumberFormat.getInstance(Locale.US);
         DecimalFormatSymbols symbols = formatter.getDecimalFormatSymbols();
         symbols.setGroupingSeparator(' ');
@@ -123,20 +144,23 @@ public class DataLoader {
                 flyFile.setFile_size(JdbcUtils.getOptionalLong(rs, "file_size"));
 
                 flyFile.setFirst_date(JdbcUtils.getOptionalLong(rs, "first_date"));
-                flyFile.setLast_date(JdbcUtils.getOptionalString(rs, "last_date"));
+                flyFile.setLast_date(JdbcUtils.getOptionalLong(rs, "last_date"));
 
-                flyFile.setCount_plus(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_plus"), 0L));
-                flyFile.setCount_minus(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_minus"), 0L));
-                flyFile.setCount_fake(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_fake"), 0L));
-                flyFile.setCount_download(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_download"), 0L));
-                flyFile.setCount_upload(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_upload"), 0L));
-                flyFile.setCount_query(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_query"), 1L));
-                flyFile.setCount_media(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_media"), 0L));
-                flyFile.setCount_antivirus(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_antivirus"), 0L));
+                FlyFileCounters counters = new FlyFileCounters();
+                counters.setCount_plus(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_plus"), 0L));
+                counters.setCount_minus(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_minus"), 0L));
+                counters.setCount_fake(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_fake"), 0L));
+                counters.setCount_download(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_download"), 0L));
+                counters.setCount_upload(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_upload"), 0L));
+                counters.setCount_query(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_query"), 1L));
+                counters.setCount_media(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_media"), 0L));
+                counters.setCount_antivirus(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_antivirus"), 0L));
+                flyFile.setCounters(counters);
+
                 // пишем в кассандру
                 long parsePoint = System.nanoTime();
                 long parse = parsePoint - start;
-                loader.loadToCassandra(flyFile, session1, boundStatement);
+                loader.loadToCassandra(flyFile, session1, boundStatement, boundStatementCounters);
                 long load = System.nanoTime() - parsePoint;
                 counter++;
                 System.out.println("loaded count = " + counter +
@@ -186,25 +210,32 @@ public class DataLoader {
         cluster.close();
     }
 
-    private void loadToCassandra(final FlyFile flyFile, Session session, BoundStatement boundStatement) {
+    private void loadToCassandra(final FlyFile flyFile, Session session, BoundStatement boundStatement, BoundStatement boundStatementCounters) {
+        //insert file
         session.executeAsync(boundStatement.bind(
                 flyFile.getId(),
                 flyFile.getTth(),
                 flyFile.getFile_size(),
-                flyFile.getCount_plus(),
-                flyFile.getCount_minus(),
-                flyFile.getCount_fake(),
-                flyFile.getCount_download(),
-                flyFile.getCount_upload(),
-                flyFile.getCount_query(),
                 flyFile.getFirst_date(),
                 flyFile.getLast_date(),
                 flyFile.getFly_audio(),
                 flyFile.getFly_audio_br(),
                 flyFile.getFly_video(),
-                flyFile.getFly_xy(),
-                flyFile.getCount_media(),
-                flyFile.getCount_antivirus()));
+                flyFile.getFly_xy())
+        );
+        //update counters
+        session.executeAsync(boundStatementCounters.bind(
+                flyFile.getCounters().getCount_plus(),
+                flyFile.getCounters().getCount_minus(),
+                flyFile.getCounters().getCount_fake(),
+                flyFile.getCounters().getCount_download(),
+                flyFile.getCounters().getCount_upload(),
+                flyFile.getCounters().getCount_query(),
+                flyFile.getCounters().getCount_media(),
+                flyFile.getCounters().getCount_antivirus(),
+                flyFile.getTth(),
+                flyFile.getFile_size())
+        );
     }
 
 }

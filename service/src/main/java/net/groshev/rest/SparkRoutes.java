@@ -48,6 +48,7 @@ public class SparkRoutes {
                 try {
                     requestBeans = mapper.readValue(w, FlyArrayRequestBean.class);
                 } catch (IOException e) {
+                    LOGGER.error(e.getMessage(), e);
                     halt(500, e.getMessage());
                 }
                 long count = requestBeans.getArray().size();
@@ -55,7 +56,13 @@ public class SparkRoutes {
                 double msMapping = (gMapping - gDecompress)/ coeff;
 
                 // обрабатываем
-                FlyArrayOutBean bean = dbService.processByKey(requestBeans);
+                FlyArrayOutBean bean = null;
+                try {
+                    bean = dbService.processByKey(requestBeans);
+                } catch (Exception e) {
+                    LOGGER.error(e.getMessage(), e);
+                    halt(500, e.getMessage());
+                }
                 long gProcess = System.nanoTime();
                 double msProcess = (gProcess - gMapping)/ coeff;
 
@@ -71,6 +78,7 @@ public class SparkRoutes {
                 try {
                     CompressionUtils.shovelInToOut(in, out);
                 } catch (IOException e) {
+                    LOGGER.error(e.getMessage(), e);
                     halt(500, e.getMessage());
                 }
                 in.close();

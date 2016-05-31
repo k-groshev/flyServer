@@ -52,6 +52,9 @@ public class CassandraUtils {
     }
 
     public static Long getOptionalLong(Row rs, String label)  {
+        if (rs == null) {
+            return null;
+        }
         long value = rs.getLong(label);
         return wasNull(rs, value, label);
     }

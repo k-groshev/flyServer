@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import net.groshev.rest.beans.FlyArrayOutBean;
 import net.groshev.rest.beans.FlyOutBean;
 import net.groshev.rest.domain.model.FlyFile;
+import net.groshev.rest.domain.model.FlyFileCounters;
 import net.groshev.rest.domain.repository.FlyRepository;
 import net.groshev.rest.mappers.FlyOutBeanMapper;
 import net.groshev.rest.requests.FlyArrayRequestBean;
@@ -86,11 +87,6 @@ public class FlySqliteRepository implements FlyRepository {
     }
 
     @Override
-    public Void update(FlyOutBean bean) {
-        return null;
-    }
-
-    @Override
     public FlyArrayOutBean find(final FlyArrayRequestBean bean) {
 
         FlyArrayOutBean outBean = new FlyArrayOutBean();
@@ -119,16 +115,18 @@ public class FlySqliteRepository implements FlyRepository {
                 flyFile.setFile_size(JdbcUtils.getOptionalLong(rs, "file_size"));
 
                 flyFile.setFirst_date(JdbcUtils.getOptionalLong(rs, "first_date"));
-                flyFile.setLast_date(JdbcUtils.getOptionalString(rs, "last_date"));
+                flyFile.setLast_date(Long.parseLong(JdbcUtils.getOptionalString(rs, "last_date")));
 
-                flyFile.setCount_plus(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_plus"), 0L));
-                flyFile.setCount_minus(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_minus"), 0L));
-                flyFile.setCount_fake(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_fake"), 0L));
-                flyFile.setCount_download(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_download"), 0L));
-                flyFile.setCount_upload(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_upload"), 0L));
-                flyFile.setCount_query(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_query"), 1L));
-                flyFile.setCount_media(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_media"), 0L));
-                flyFile.setCount_antivirus(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_antivirus"), 0L));
+                FlyFileCounters counters = new FlyFileCounters();
+                counters.setCount_plus(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_plus"), 0L));
+                counters.setCount_minus(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_minus"), 0L));
+                counters.setCount_fake(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_fake"), 0L));
+                counters.setCount_download(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_download"), 0L));
+                counters.setCount_upload(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_upload"), 0L));
+                counters.setCount_query(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_query"), 1L));
+                counters.setCount_media(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_media"), 0L));
+                counters.setCount_antivirus(JdbcUtils.nvl(JdbcUtils.getOptionalLong(rs, "count_antivirus"), 0L));
+                flyFile.setCounters(counters);
                 // пишем в кассандру
 
                 FlyOutBeanMapper mapper = new FlyOutBeanMapper();

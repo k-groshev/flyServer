@@ -28,16 +28,6 @@ public class FlyOutBeanMapper implements Mapper<FlyFile, FlyOutBean> {
 
         outBean.setFirst_date(object.getFirst_date());
         outBean.setLast_date(object.getLast_date());
-
-        outBean.setCount_plus(object.getCount_plus());
-        outBean.setCount_minus(object.getCount_minus());
-        outBean.setCount_fake(object.getCount_fake());
-        outBean.setCount_download(object.getCount_download());
-        outBean.setCount_upload(object.getCount_upload());
-        outBean.setCount_query(object.getCount_query());
-        outBean.setCount_media(object.getCount_media());
-        outBean.setCount_antivirus(object.getCount_antivirus());
-
         return outBean;
     }
 

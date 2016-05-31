@@ -17,6 +17,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 public class FlyCassandraRepository implements FlyRepository {
@@ -25,7 +29,8 @@ public class FlyCassandraRepository implements FlyRepository {
     public static final double coeff = 1000000.0;
     Session session;
     PreparedStatement statementFind;
-    BoundStatement boundStatementFind;
+    PreparedStatement statementUpdate;
+    PreparedStatement statementUpdateCounters;
     private String hostPrimary = "192.168.10.11";
     private String hostSecondary = "192.168.10.12";
     private int port = 9042;
@@ -36,9 +41,9 @@ public class FlyCassandraRepository implements FlyRepository {
         buildCluster();
         session = getCluster().connect(keyspace);
         // prepare statement
-        statementFind = session.prepare("SELECT * FROM fly.fly_file WHERE  tth = :tth and file_size = :size ;");
-        boundStatementFind = new BoundStatement(statementFind);
-
+        statementFind = session.prepare("SELECT * FROM fly.fly_file WHERE  tth = ? and file_size = ?; ");
+        statementUpdate = session.prepare("update fly_file set last_date=toUnixTimestamp(now()) where tth = ? and file_size = ?; ");
+        statementUpdateCounters = session.prepare("update fly_file_counters set count_query=count_query+1 where tth = ? and file_size = ?; ");
     }
 
     private Cluster buildCluster() {
@@ -102,49 +107,45 @@ public class FlyCassandraRepository implements FlyRepository {
         if (bean == null || bean.getArray() == null) {
             return null;
         }
+//        ExecutorService pool = Executors.newFixedThreadPool(bean.getArray().size()*2+ 2);
+//        List<Callable<Void>> callables =  bean.getArray().stream()
+//                .map(e -> (Callable<Void>) () -> {
+//                    session.executeAsync(statementUpdate.bind(e.getTth(), e.getSize()));
+//                    session.executeAsync(statementUpdateCounters.bind(e.getTth(), e.getSize()));
+//                    return null;
+//                })
+//                .collect(Collectors.toList());
+//
+//        try {
+//            pool.invokeAll(callables)
+//                    .stream()
+//                    .map(future -> {
+//                        try {
+//                            future.get();
+//                            return null;
+//                        } catch (Exception ex) {
+//                            LOGGER.debug("ex:" + ex.getClass().getName() + " message:" + ex.getMessage());
+//                            throw new IllegalStateException(ex);
+//                        }
+//                    });
+//        } catch (InterruptedException ex) {
+//            LOGGER.debug("ex:" + ex.getClass().getName() + " message:" + ex.getMessage());
+//        } finally {
+//            pool.shutdown();
+//        }
 
-        String query = "update fly_file set count_query=count_query+1, last_date=toUnixTimestamp(now()) where tth in (";
-        query += bean.getArray().stream()
-                .map(e -> "'" + e.getTth() + "'")
-                .collect(Collectors.joining(","));
-        query += ") and file_size in (";
-        query += bean.getArray().stream()
-                .map(e -> String.format("%d", e.getSize()))
-                .collect(Collectors.joining(","));
-        query += ");";
 
-
-        session.executeAsync(query);
-
-        //long end = System.nanoTime() - start;
-        //LOGGER.debug("updateOne: " + end / 1000000.0 + " ms");
-        return null;
-    }
-
-    @Override
-    public Void update(FlyOutBean bean) {
-        //long start = System.nanoTime();
-
-        if (bean == null || bean.getId() == 0L) {
-            return null;
+        List<ResultSetFuture> features = new ArrayList<>();
+        for (FlyOutBean requestBean : bean.getArray()) {
+            ResultSetFuture resultSetFuture = session.executeAsync(statementUpdate.bind(requestBean.getTth(), requestBean.getSize()));
+            features.add(resultSetFuture);
+            ResultSetFuture resultSetFutureCounters = session.executeAsync(statementUpdateCounters.bind(requestBean.getTth(), requestBean.getSize()));
+            features.add(resultSetFutureCounters);
         }
 
-        Session session = getCluster().connect(keyspace);
-
-        // Insert one record into the users table
-        PreparedStatement statement = session.prepare("update fly_file set count_query=count_query+1, last_date=toUnixTimestamp(now()) where id=?;");
-
-        BoundStatement boundStatement = new BoundStatement(statement);
-
-        session.executeAsync(boundStatement.bind(
-                bean.getId()));
-
-        session.close();
-
-        LOGGER.debug("updated id:" + bean.getId());
-
-        //long end = System.nanoTime() - start;
-        //LOGGER.debug("updateOne: " + end / 1000000.0 + " ms");
+        for (ResultSetFuture feature : features) {
+                feature.getUninterruptibly();
+        }
         return null;
     }
 
@@ -154,172 +155,36 @@ public class FlyCassandraRepository implements FlyRepository {
         FlyArrayOutBean outBean = new FlyArrayOutBean();
         outBean.setArray(new ArrayList<>());
 
-        PreparedStatement statement = session.prepare("SELECT * FROM fly.fly_file WHERE  tth = ? and file_size = ?; ");
 
         List<ResultSetFuture> features = new ArrayList<>();
         for (FlyRequestBean requestBean : bean.getArray()) {
-            ResultSetFuture resultSetFuture = session.executeAsync(statement.bind(requestBean.getTth(), requestBean.getSize()));
+            ResultSetFuture resultSetFuture = session.executeAsync(statementFind.bind(requestBean.getTth(), requestBean.getSize()));
             features.add(resultSetFuture);
         }
 
         for (ResultSetFuture feature : features) {
             ResultSet rows = feature.getUninterruptibly();
             Row row = rows.one();
-            // получаем файл из sqlite
-            FlyFile flyFile = new FlyFile();
-            flyFile.setFly_audio(CassandraUtils.getOptionalString(row, "fly_audio"));
-            flyFile.setFly_audio_br(CassandraUtils.getOptionalString(row, "fly_audio_br"));
-            flyFile.setFly_video(CassandraUtils.getOptionalString(row, "fly_video"));
-            flyFile.setFly_xy(CassandraUtils.getOptionalString(row, "fly_xy"));
+            if (row != null) {
+                // получаем файл из sqlite
+                FlyFile flyFile = new FlyFile();
+                flyFile.setFly_audio(CassandraUtils.getOptionalString(row, "fly_audio"));
+                flyFile.setFly_audio_br(CassandraUtils.getOptionalString(row, "fly_audio_br"));
+                flyFile.setFly_video(CassandraUtils.getOptionalString(row, "fly_video"));
+                flyFile.setFly_xy(CassandraUtils.getOptionalString(row, "fly_xy"));
 
-            flyFile.setId(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "id"), 0L));
-            flyFile.setTth(CassandraUtils.getOptionalString(row, "tth"));
-            flyFile.setFile_size(CassandraUtils.getOptionalLong(row, "file_size"));
+                flyFile.setId(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "id"), 0L));
+                flyFile.setTth(CassandraUtils.getOptionalString(row, "tth"));
+                flyFile.setFile_size(CassandraUtils.getOptionalLong(row, "file_size"));
 
-            flyFile.setFirst_date(CassandraUtils.getOptionalLong(row, "first_date"));
-            flyFile.setLast_date(CassandraUtils.getOptionalString(row, "last_date"));
+                flyFile.setFirst_date(CassandraUtils.getOptionalLong(row, "first_date"));
+                flyFile.setLast_date(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "last_date"), 0L));
 
-            flyFile.setCount_plus(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_plus"), 0L));
-            flyFile.setCount_minus(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_minus"), 0L));
-            flyFile.setCount_fake(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_fake"), 0L));
-            flyFile.setCount_download(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_download"), 0L));
-            flyFile.setCount_upload(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_upload"), 0L));
-            flyFile.setCount_query(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_query"), 1L));
-            flyFile.setCount_media(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_media"), 0L));
-            flyFile.setCount_antivirus(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_antivirus"), 0L));
-            // пишем в кассандру
-
-            FlyOutBeanMapper mapper = new FlyOutBeanMapper();
-            outBean.getArray().add(mapper.map(flyFile));
-
-
+                // mapping
+                FlyOutBeanMapper mapper = new FlyOutBeanMapper();
+                outBean.getArray().add(mapper.map(flyFile));
+            }
         }
-//
-//        String query = "SELECT * FROM fly.fly_file WHERE  tth in (";
-//        query += bean.getArray().stream()
-//                .map(e -> "'" + e.getTth() + "'")
-//                .collect(Collectors.joining(","));
-//        query += ") and file_size in (";
-//        query += bean.getArray().stream()
-//                .map(e -> String.format("%d", e.getSize()))
-//                .collect(Collectors.joining(","));
-//        query += ");";
-//
-//        ResultSet results = session.execute(query);
-//        for (Row row : results) {
-//
-//            // получаем файл из sqlite
-//            FlyFile flyFile = new FlyFile();
-//            flyFile.setFly_audio(CassandraUtils.getOptionalString(row, "fly_audio"));
-//            flyFile.setFly_audio_br(CassandraUtils.getOptionalString(row, "fly_audio_br"));
-//            flyFile.setFly_video(CassandraUtils.getOptionalString(row, "fly_video"));
-//            flyFile.setFly_xy(CassandraUtils.getOptionalString(row, "fly_xy"));
-//
-//            flyFile.setId(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "id"), 0L));
-//            flyFile.setTth(CassandraUtils.getOptionalString(row, "tth"));
-//            flyFile.setFile_size(CassandraUtils.getOptionalLong(row, "file_size"));
-//
-//            flyFile.setFirst_date(CassandraUtils.getOptionalLong(row, "first_date"));
-//            flyFile.setLast_date(CassandraUtils.getOptionalString(row, "last_date"));
-//
-//            flyFile.setCount_plus(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_plus"), 0L));
-//            flyFile.setCount_minus(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_minus"), 0L));
-//            flyFile.setCount_fake(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_fake"), 0L));
-//            flyFile.setCount_download(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_download"), 0L));
-//            flyFile.setCount_upload(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_upload"), 0L));
-//            flyFile.setCount_query(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_query"), 1L));
-//            flyFile.setCount_media(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_media"), 0L));
-//            flyFile.setCount_antivirus(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_antivirus"), 0L));
-//            // пишем в кассандру
-//
-//            FlyOutBeanMapper mapper = new FlyOutBeanMapper();
-//            outBean.getArray().add(mapper.map(flyFile));
-//        }
-
-
-//
-//        ExecutorService pool = Executors.newFixedThreadPool(bean.getArray().size() + 2);
-//        List<Callable<FlyOutBean>> callables = new ArrayList<>();
-//        Callable<FlyOutBean> flyOutBeanCallable = bean.getArray().stream()
-//                .map(e -> (Callable<FlyOutBean>) () -> findOne(session, e, boundStatementFind))
-//                .findFirst()
-//                .get();
-//        callables.add(flyOutBeanCallable);
-///*
-//        List<Callable<FlyOutBean>> callables = new ArrayList<>();
-//        bean.getArray().stream()
-//                .map(e -> (Callable<FlyOutBean>) () -> findOne(session, e, boundStatementFind))
-//                .findFirst()
-//                .get()
-//                .collect(Collectors.toList());
-//*/
-//
-//
-//        try {
-//            pool.invokeAll(callables)
-//                    .stream()
-//                    .map(future -> {
-//                        try {
-//                            //long start = System.nanoTime();
-//                            FlyOutBean flyOutBean = future.get();
-//                            //double end = (System.nanoTime() - start) / coeff;
-//                            //LOGGER.debug("find one in {} ms", end);
-//                            return flyOutBean;
-//                        } catch (Exception ex) {
-//                            LOGGER.debug("ex:" + ex.getClass().getName() + " message:" + ex.getMessage());
-//                            throw new IllegalStateException(ex);
-//                        }
-//                    })
-//                    .forEach(flyOutBean -> outBean.getArray().add(flyOutBean));
-//        } catch (InterruptedException ex) {
-//            LOGGER.debug("ex:" + ex.getClass().getName() + " message:" + ex.getMessage());
-//        } finally {
-//            pool.shutdown();
-//        }
-//        //long end = System.nanoTime() - start;
-        //LOGGER.debug("found (" + bean.getArray().size() + ")  in  " + end / 1000000.0 + " ms");
-
         return outBean;
-    }
-
-    private FlyOutBean findOne(Session session, FlyRequestBean e, BoundStatement boundStatement) {
-        long start = System.nanoTime();
-
-        ResultSet results = session.execute(boundStatement.bind()
-                .setString("tth", e.getTth())
-                .setLong("size", e.getSize()));
-        double end = (System.nanoTime() - start) / coeff;
-        LOGGER.debug("find one query {} ms", end);
-
-        for (Row row : results) {
-
-            // получаем файл из sqlite
-            FlyFile flyFile = new FlyFile();
-            flyFile.setFly_audio(CassandraUtils.getOptionalString(row, "fly_audio"));
-            flyFile.setFly_audio_br(CassandraUtils.getOptionalString(row, "fly_audio_br"));
-            flyFile.setFly_video(CassandraUtils.getOptionalString(row, "fly_video"));
-            flyFile.setFly_xy(CassandraUtils.getOptionalString(row, "fly_xy"));
-
-            flyFile.setId(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "id"), 0L));
-            flyFile.setTth(CassandraUtils.getOptionalString(row, "tth"));
-            flyFile.setFile_size(CassandraUtils.getOptionalLong(row, "file_size"));
-
-            flyFile.setFirst_date(CassandraUtils.getOptionalLong(row, "first_date"));
-            flyFile.setLast_date(CassandraUtils.getOptionalString(row, "last_date"));
-
-            flyFile.setCount_plus(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_plus"), 0L));
-            flyFile.setCount_minus(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_minus"), 0L));
-            flyFile.setCount_fake(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_fake"), 0L));
-            flyFile.setCount_download(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_download"), 0L));
-            flyFile.setCount_upload(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_upload"), 0L));
-            flyFile.setCount_query(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_query"), 1L));
-            flyFile.setCount_media(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_media"), 0L));
-            flyFile.setCount_antivirus(CassandraUtils.nvl(CassandraUtils.getOptionalLong(row, "count_antivirus"), 0L));
-            // пишем в кассандру
-
-            FlyOutBeanMapper mapper = new FlyOutBeanMapper();
-            return mapper.map(flyFile);
-        }
-        return null;
     }
 }
