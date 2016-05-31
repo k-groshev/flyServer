@@ -96,16 +96,11 @@ public class FlyCassandraRepository implements FlyRepository {
 
     @Override
     public Void insert(FlyRequestBean bean) {
-        //long start = System.nanoTime();
-        // Connect to the cluster
-
-        session.executeAsync(statementInsert.bind(
-            bean.getTth(),
-            bean.getSize()));
-
+        if (bean == null) {
+            return null;
+        }
+        session.executeAsync(statementInsert.bind(bean.getTth(),bean.getSize()));
         LOGGER.debug("inserted record:" + bean.toString());
-        //long end = System.nanoTime() - start;
-        //LOGGER.debug("insertOne: " + end / 1000000.0 + " ms");
         return null;
     }
 

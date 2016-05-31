@@ -80,21 +80,9 @@ public class FlyDBServiceImpl implements FlyDBService {
         List<FlyRequestBean> collect = col.stream()
                 .map(r -> new FlyRequestBean(r.substring(0, r.indexOf("~")), Long.decode(r.substring(r.indexOf("~") + 1))))
                 .collect(Collectors.toList());
-
-        ExecutorService pool = Executors.newFixedThreadPool(collect.size());
-        final long timeoutMs = 100;
-        collect.parallelStream()
-                .map(e ->
-                        CompletableFuture.supplyAsync(() -> repository.insert(e), pool)
-                )
-                .forEach(future -> {
-                    try {
-                        future.get();
-                    } catch (Exception ex) {
-                        LOGGER.debug("ex:" + ex.getClass().getName() + " message:" + ex.getMessage());
-                    }
-                });
-        pool.shutdown();
+        for (FlyRequestBean flyRequestBean : collect) {
+            repository.insert(flyRequestBean);
+        }
     }
 
 }
