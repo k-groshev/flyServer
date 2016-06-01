@@ -15,6 +15,7 @@ public class FlyArrayRequestBean {
     private long cache;
     private long different_counter;
     private long only_counter;
+    private long only_ext_info;
 
     public FlyArrayRequestBean() {
     }
@@ -62,5 +63,13 @@ public class FlyArrayRequestBean {
 
     public void setOnly_counter(final long only_counter) {
         this.only_counter = only_counter;
+    }
+
+    public long getOnly_ext_info() {
+        return this.only_ext_info;
+    }
+
+    public void setOnly_ext_info(final long only_ext_info) {
+        this.only_ext_info = only_ext_info;
     }
 }
