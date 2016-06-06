@@ -2,14 +2,17 @@
 # vi: set ft=ruby :
 
 VAGRANTFILE_API_VERSION = "2"
+HOME_DISK = "/Users/kgroshev/java_ee/apps/rest-test/tests/flyServer-cassandra.vdi"
+#disk size in MiB units
+HOME_DISK_SIZE = 10000
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 #  config.vm.box = "ubuntu/trusty64"
   config.vm.box = "larryli/vivid64"
 
   config.vm.host_name = "cassandra-spark"
-  config.vm.network :private_network, ip: "192.168.10.12"
-  config.vm.network :forwarded_port, guest: 22, host: 1234
+  config.vm.network :private_network, ip: "192.168.10.11"
+  config.vm.network :forwarded_port, guest: 22, host: 1233
   config.ssh.forward_agent = true # Enables agent forwarding over SSH connections.
   config.ssh.forward_x11 = true # Enables X11 forwarding over SSH connections.
 
@@ -20,5 +23,19 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provider :virtualbox do |vb|
     vb.customize ["modifyvm", :id, "--memory", "4096"]
     vb.cpus = 2
+    # creating and attaching vdi-disk
+    if ARGV[0] == "up" && ! File.exist?(HOME_DISK)
+          vb.customize ['createhd',
+                        '--filename', HOME_DISK,
+                        '--format', 'VDI',
+                        '--size', HOME_DISK_SIZE]
+
+          vb.customize ['storageattach', :id,
+                        '--storagectl', 'SATA Controller',
+                        '--port', 0,
+    		            '--device', 0,
+                        '--type', 'hdd',
+              		    '--medium', HOME_DISK]
+        end
   end
 end
