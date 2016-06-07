@@ -52,7 +52,7 @@ public class RESTTest {
 
         List<Double> results = new ArrayList<>();
         // делаем POST-запрос
-        baseURI = "http://192.168.10.11";
+        baseURI = "http://192.168.1.209";
         port = 37015;
         log.info("testing server: {}:{}", baseURI, port);
 

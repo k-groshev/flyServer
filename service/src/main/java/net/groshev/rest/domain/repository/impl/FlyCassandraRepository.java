@@ -65,10 +65,11 @@ public class FlyCassandraRepository implements FlyRepository {
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
+        LOGGER.debug("host = " + hostPrimary);
         return Cluster
             .builder()
             .addContactPoint(hostPrimary)
-            .addContactPoint(hostSecondary)
+//            .addContactPoint(hostSecondary)
             .withPort(port)
             .withRetryPolicy(DefaultRetryPolicy.INSTANCE)
             .withLoadBalancingPolicy(
